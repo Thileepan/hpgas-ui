@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#FF6B35">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Make Delivery - HP Gas Driver</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body class="bg-gray-50">
+    <!-- Mobile Header -->
+    <div class="app-header">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <a href="driver-deliveries.html" class="p-2 hover:bg-gray-100 rounded-lg">
+                    <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                </a>
+                <div>
+                    <h3 class="font-bold text-gray-900" id="customerName">Loading...</h3>
+                    <p class="text-xs text-gray-500">Make Delivery</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="mobile-container pb-24">
+        <!-- Customer Info Card -->
+        <div class="card mb-6 animate-slide-up">
+            <div class="flex items-start justify-between mb-4">
+                <div class="flex items-start gap-3 flex-1">
+                    <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-bold text-gray-900" id="customerInfoName">-</h3>
+                        <p class="text-sm text-gray-600" id="customerBusinessType">-</p>
+                        <p class="text-sm text-gray-500 mt-1" id="customerAddress">-</p>
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="callCustomer()" class="flex-1 btn btn-secondary btn-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                    </svg>
+                    Call
+                </button>
+                <button onclick="whatsappCustomer()" class="flex-1 btn btn-secondary btn-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                    </svg>
+                    WhatsApp
+                </button>
+                <button onclick="navigateToCustomer()" class="flex-1 btn btn-primary btn-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                    </svg>
+                    Navigate
+                </button>
+            </div>
+        </div>
+
+        <!-- Delivery Form -->
+        <form id="deliveryForm">
+            <!-- 1. Cylinders Delivered -->
+            <div class="card mb-6 animate-slide-up" style="animation-delay: 0.1s">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-gray-900">1. Cylinders Delivered</h3>
+                    <button type="button" onclick="addDeliveredItem()" class="text-orange-500 hover:text-orange-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div id="deliveredItemsContainer" class="space-y-3">
+                    <!-- Delivered items will be added here -->
+                </div>
+                <div id="emptyDeliveredState" class="text-center py-8">
+                    <svg class="w-16 h-16 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    </svg>
+                    <p class="text-gray-500 text-sm">No cylinders added yet</p>
+                    <button type="button" onclick="addDeliveredItem()" class="btn btn-primary btn-sm mt-3">
+                        Add Cylinder
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2. Empty Cylinders Collected -->
+            <div class="card mb-6 animate-slide-up" style="animation-delay: 0.2s">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-gray-900">2. Empty Cylinders Collected</h3>
+                    <button type="button" onclick="addEmptyItem()" class="text-orange-500 hover:text-orange-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div id="emptyItemsContainer" class="space-y-3">
+                    <!-- Empty items will be added here -->
+                </div>
+                <div id="emptyCollectedState" class="text-center py-8">
+                    <svg class="w-16 h-16 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    </svg>
+                    <p class="text-gray-500 text-sm">No empty cylinders collected</p>
+                    <button type="button" onclick="addEmptyItem()" class="btn btn-secondary btn-sm mt-3">
+                        Add Empty Cylinder
+                    </button>
+                </div>
+            </div>
+
+            <!-- 3. Return/Damaged Cylinders -->
+            <div class="card mb-6 animate-slide-up" style="animation-delay: 0.3s">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-gray-900">3. Return/Damaged Cylinders</h3>
+                    <button type="button" onclick="addReturnItem()" class="text-orange-500 hover:text-orange-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                    </button>
+                </div>
+                <p class="text-xs text-gray-500 mb-3">Each return cylinder requires a photo captured with camera</p>
+                <div id="returnItemsContainer" class="space-y-3">
+                    <!-- Return items will be added here -->
+                </div>
+                <div id="emptyReturnState" class="text-center py-8">
+                    <svg class="w-16 h-16 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                    <p class="text-gray-500 text-sm">No return cylinders</p>
+                    <button type="button" onclick="addReturnItem()" class="btn btn-secondary btn-sm mt-3">
+                        Add Return Cylinder
+                    </button>
+                </div>
+            </div>
+
+            <!-- 4. Delivery Photos -->
+            <div class="card mb-6 animate-slide-up" style="animation-delay: 0.4s">
+                <h3 class="text-lg font-bold text-gray-900 mb-4">4. Delivery Photos (Max 4) *</h3>
+                <p class="text-xs text-gray-500 mb-3">Capture photos of the delivery location using camera</p>
+                <div class="photo-grid" id="deliveryPhotosGrid">
+                    <div class="photo-item" onclick="captureDeliveryPhoto(0)">
+                        <div class="text-center">
+                            <svg class="w-8 h-8 text-gray-400 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            <p class="text-xs text-gray-500">Tap to Capture</p>
+                        </div>
+                    </div>
+                    <div class="photo-item hidden" onclick="captureDeliveryPhoto(1)">
+                        <div class="text-center">
+                            <svg class="w-8 h-8 text-gray-400 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            <p class="text-xs text-gray-500">Tap to Capture</p>
+                        </div>
+                    </div>
+                    <div class="photo-item hidden" onclick="captureDeliveryPhoto(2)">
+                        <div class="text-center">
+                            <svg class="w-8 h-8 text-gray-400 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            <p class="text-xs text-gray-500">Tap to Capture</p>
+                        </div>
+                    </div>
+                    <div class="photo-item hidden" onclick="captureDeliveryPhoto(3)">
+                        <div class="text-center">
+                            <svg class="w-8 h-8 text-gray-400 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            <p class="text-xs text-gray-500">Tap to Capture</p>
+                        </div>
+                    </div>
+                </div>
+                <input type="file" id="deliveryPhotoInput" accept="image/*" capture="environment" class="hidden" onchange="handleDeliveryPhoto(event)">
+            </div>
+
+            <!-- 5. Payment Details -->
+            <div class="card mb-6 animate-slide-up" style="animation-delay: 0.5s">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-gray-900">5. Payment Details</h3>
+                    <button type="button" onclick="addPayment()" class="text-orange-500 hover:text-orange-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div id="paymentsContainer" class="space-y-3">
+                    <!-- Payments will be added here -->
+                </div>
+                <div id="emptyPaymentState" class="text-center py-8">
+                    <svg class="w-16 h-16 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    <p class="text-gray-500 text-sm">No payment added</p>
+                    <button type="button" onclick="addPayment()" class="btn btn-primary btn-sm mt-3">
+                        Add Payment
+                    </button>
+                </div>
+                <div id="totalPaymentSection" class="hidden mt-4 pt-4 border-t border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <span class="font-semibold text-gray-900">Total Payment:</span>
+                        <span class="text-2xl font-bold text-green-600">₹<span id="totalPaymentAmount">0</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. Additional Notes -->
+            <div class="card mb-6 animate-slide-up" style="animation-delay: 0.6s">
+                <h3 class="text-lg font-bold text-gray-900 mb-4">6. Additional Notes (Optional)</h3>
+                <textarea id="deliveryNotes" rows="4" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="Enter any additional notes about the delivery..."></textarea>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="fixed bottom-20 left-0 right-0 p-4 bg-white border-t border-gray-200 z-10">
+                <button type="submit" class="w-full btn btn-primary btn-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    Complete Delivery
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="driver-dashboard.html" class="bottom-nav-item">
+            <svg class="bottom-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+            </svg>
+            <span class="bottom-nav-label">Home</span>
+        </a>
+        <a href="driver-trip.html" class="bottom-nav-item">
+            <svg class="bottom-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+            </svg>
+            <span class="bottom-nav-label">Trip</span>
+        </a>
+        <a href="driver-deliveries.html" class="bottom-nav-item active">
+            <svg class="bottom-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+            </svg>
+            <span class="bottom-nav-label">Customers</span>
+        </a>
+        <a href="driver-history.html" class="bottom-nav-item">
+            <svg class="bottom-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <span class="bottom-nav-label">History</span>
+        </a>
+    </nav>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="assets/js/mock-data.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/driver-make-delivery.js"></script>
+</body>
+</html>

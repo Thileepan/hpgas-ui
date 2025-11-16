@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Trip - HP Gas Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body class="bg-gray-50">
+    <!-- Desktop Sidebar -->
+    <div class="hidden lg:block sidebar">
+        <div class="p-6">
+            <div class="flex items-center gap-3 mb-8">
+                <div class="bg-gradient-to-br from-orange-500 to-orange-600 w-12 h-12 rounded-xl flex items-center justify-center">
+                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-900">HP Gas</h3>
+                    <p class="text-xs text-gray-500">Manager</p>
+                </div>
+            </div>
+
+            <nav class="space-y-1">
+                <a href="manager-dashboard.html" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                    </svg>
+                    Dashboard
+                </a>
+                <a href="trips.html" class="flex items-center gap-3 px-4 py-3 text-orange-600 bg-orange-50 rounded-lg font-medium">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    Trips
+                </a>
+                <a href="vehicles.html" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Vehicles & Drivers
+                </a>
+                <a href="customers.html" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    Customers
+                </a>
+                <a href="filling-stations.html" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+                    </svg>
+                    Filling Stations
+                </a>
+                <a href="inventory.html" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    </svg>
+                    Inventory
+                </a>
+            </nav>
+        </div>
+
+        <div class="absolute bottom-0 left-0 right-0 p-6 border-t border-gray-200">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                    <span class="text-orange-600 font-semibold" id="userInitials">SB</span>
+                </div>
+                <div class="flex-1">
+                    <p class="font-medium text-gray-900 text-sm" id="userName">Suresh Babu</p>
+                    <p class="text-xs text-gray-500" id="godownName">Chennai Main Godown</p>
+                </div>
+            </div>
+            <button onclick="logout()" class="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 font-medium text-sm transition-colors">
+                Logout
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="lg:main-content">
+        <!-- Mobile Header -->
+        <div class="app-header">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <a href="manager-trips.html" class="p-2 hover:bg-gray-100 rounded-lg lg:hidden">
+                        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                    </a>
+                    <div>
+                        <h3 class="font-bold text-gray-900" id="pageTitle">Create Delivery Trip</h3>
+                        <p class="text-xs text-gray-500" id="mobileGodownName">Chennai Main Godown</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Content -->
+        <div class="mobile-container animate-fade-in">
+            <form id="createTripForm">
+                <!-- Trip Type Selection -->
+                <div class="card mb-6 animate-slide-up">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Trip Type</h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button type="button" id="deliveryTypeBtn" class="trip-type-btn active p-4 border-2 rounded-xl transition-all">
+                            <svg class="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                            <p class="font-semibold">Delivery Trip</p>
+                            <p class="text-xs mt-1 opacity-70">Deliver to customers</p>
+                        </button>
+                        <button type="button" id="refillTypeBtn" class="trip-type-btn p-4 border-2 rounded-xl transition-all">
+                            <svg class="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            <p class="font-semibold">Refill Trip</p>
+                            <p class="text-xs mt-1 opacity-70">Send to filling station</p>
+                        </button>
+                    </div>
+                    <input type="hidden" id="tripType" value="delivery">
+                </div>
+
+                <!-- DC Number (Auto-generated) -->
+                <div class="card mb-6 animate-slide-up" style="animation-delay: 0.1s">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold text-gray-900">DC Number</h3>
+                        <span class="badge badge-primary">Auto-generated</span>
+                    </div>
+                    <div class="p-4 bg-orange-50 rounded-lg border-2 border-orange-200">
+                        <p class="text-2xl font-bold text-orange-600 text-center" id="dcNumber">DC/2024/---</p>
+                    </div>
+                </div>
+
+                <!-- Vehicle Selection -->
+                <div class="card mb-6 animate-slide-up" style="animation-delay: 0.2s">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Vehicle Selection</h3>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Select Vehicle *</label>
+                        <select id="vehicleSelect" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all" required>
+                            <option value="">-- Select Vehicle --</option>
+                        </select>
+                    </div>
+
+                    <!-- Vehicle Details (Auto-loaded) -->
+                    <div id="vehicleDetails" class="hidden mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <p class="text-sm font-medium text-gray-700 mb-2">Assigned Crew:</p>
+                        <div class="space-y-2">
+                            <div class="flex items-center gap-2 text-sm">
+                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                </svg>
+                                <span><strong>Driver:</strong> <span id="vehicleDriver">-</span></span>
+                            </div>
+                            <div class="flex items-center gap-2 text-sm">
+                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                </svg>
+                                <span><strong>Loadman 1:</strong> <span id="vehicleLoadman1">-</span></span>
+                            </div>
+                            <div class="flex items-center gap-2 text-sm">
+                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                </svg>
+                                <span><strong>Loadman 2:</strong> <span id="vehicleLoadman2">-</span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Crew Override (Optional) -->
+                <div class="card mb-6 animate-slide-up" style="animation-delay: 0.3s">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold text-gray-900">Override Crew (Optional)</h3>
+                        <button type="button" id="toggleCrewOverride" class="text-sm text-orange-500 hover:text-orange-600 font-medium">
+                            Change
+                        </button>
+                    </div>
+                    <div id="crewOverrideSection" class="hidden space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Driver</label>
+                            <select id="driverOverride" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                                <option value="">-- Use primary driver --</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Loadman 1</label>
+                            <select id="loadman1Override" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                                <option value="">-- Use primary loadman 1 --</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Loadman 2 (Optional)</label>
+                            <select id="loadman2Override" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                                <option value="">-- Use primary loadman 2 --</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filling Station (For Refill Trip Only) -->
+                <div id="fillingStationSection" class="card mb-6 animate-slide-up hidden" style="animation-delay: 0.4s">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Filling Station *</h3>
+                    <select id="fillingStationSelect" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                        <option value="">-- Select Filling Station --</option>
+                    </select>
+                </div>
+
+                <!-- Starting Details -->
+                <div class="card mb-6 animate-slide-up" style="animation-delay: 0.5s">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Starting Details</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Starting KM *</label>
+                            <input type="number" id="startKm" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="Enter odometer reading" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Start Time *</label>
+                            <input type="datetime-local" id="startTime" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Load Details -->
+                <div class="card mb-6 animate-slide-up" style="animation-delay: 0.6s">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold text-gray-900">Load Details *</h3>
+                        <button type="button" id="addLoadBtn" class="btn btn-secondary btn-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            Add Load
+                        </button>
+                    </div>
+
+                    <div id="loadItemsContainer" class="space-y-3">
+                        <!-- Load items will be added here -->
+                    </div>
+
+                    <div id="emptyLoadState" class="empty-state py-8">
+                        <svg class="empty-state-icon mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                        </svg>
+                        <p class="text-gray-500 font-medium">No load items added</p>
+                        <p class="text-sm text-gray-400 mt-1">Click "Add Load" to add cylinder details</p>
+                    </div>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="flex gap-3 mb-6">
+                    <button type="button" onclick="window.location.href='manager-trips.html'" class="flex-1 btn btn-secondary">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 btn btn-primary">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        Create Trip
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="assets/js/mock-data.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/create-trip.js"></script>
+</body>
+</html>

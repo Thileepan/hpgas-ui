@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trips - HP Gas Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body class="bg-gray-50">
+    <!-- Desktop Sidebar -->
+    <div class="hidden lg:block sidebar">
+        <div class="p-6">
+            <div class="flex items-center gap-3 mb-8">
+                <div class="bg-gradient-to-br from-orange-500 to-orange-600 w-12 h-12 rounded-xl flex items-center justify-center">
+                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-900">HP Gas</h3>
+                    <p class="text-xs text-gray-500">Manager</p>
+                </div>
+            </div>
+
+            <nav class="space-y-1">
+                <a href="manager-dashboard.html" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                    </svg>
+                    Dashboard
+                </a>
+                <a href="trips.html" class="flex items-center gap-3 px-4 py-3 text-orange-600 bg-orange-50 rounded-lg font-medium">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    Trips
+                </a>
+                <a href="vehicles.html" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Vehicles & Drivers
+                </a>
+                <a href="customers.html" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    Customers
+                </a>
+                <a href="filling-stations.html" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+                    </svg>
+                    Filling Stations
+                </a>
+                <a href="inventory.html" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    </svg>
+                    Inventory
+                </a>
+            </nav>
+        </div>
+
+        <div class="absolute bottom-0 left-0 right-0 p-6 border-t border-gray-200">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                    <span class="text-orange-600 font-semibold" id="userInitials">SB</span>
+                </div>
+                <div class="flex-1">
+                    <p class="font-medium text-gray-900 text-sm" id="userName">Suresh Babu</p>
+                    <p class="text-xs text-gray-500" id="godownName">Chennai Main Godown</p>
+                </div>
+            </div>
+            <button onclick="logout()" class="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 font-medium text-sm transition-colors">
+                Logout
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="lg:main-content">
+        <!-- Mobile Header -->
+        <div class="app-header">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="bg-gradient-to-br from-orange-500 to-orange-600 w-10 h-10 rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-900">All Trips</h3>
+                        <p class="text-xs text-gray-500" id="mobileGodownName">Chennai Main Godown</p>
+                    </div>
+                </div>
+                <button onclick="window.location.href='create-trip.html?type=delivery'" class="btn btn-primary btn-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    New Trip
+                </button>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="mobile-container animate-fade-in">
+            <!-- Quick Create Buttons -->
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <button onclick="window.location.href='create-trip.html?type=delivery'" class="p-4 bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-xl text-left hover:from-orange-600 hover:to-orange-700 transition-all shadow-lg active:scale-95">
+                    <svg class="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    <p class="font-semibold">New Delivery</p>
+                    <p class="text-xs text-white/80 mt-1">Create delivery trip</p>
+                </button>
+
+                <button onclick="window.location.href='create-trip.html?type=refill'" class="p-4 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl text-left hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg active:scale-95">
+                    <svg class="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    <p class="font-semibold">Refill Trip</p>
+                    <p class="text-xs text-white/80 mt-1">Send to station</p>
+                </button>
+            </div>
+
+            <!-- Filter Tabs -->
+            <div class="card mb-6">
+                <div class="flex gap-2 overflow-x-auto">
+                    <button class="trip-filter-btn active px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap" data-filter="all">
+                        All Trips
+                    </button>
+                    <button class="trip-filter-btn px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap" data-filter="ongoing">
+                        Ongoing
+                    </button>
+                    <button class="trip-filter-btn px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap" data-filter="completed">
+                        Completed
+                    </button>
+                    <button class="trip-filter-btn px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap" data-filter="delivery">
+                        Delivery
+                    </button>
+                    <button class="trip-filter-btn px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap" data-filter="refill">
+                        Refill
+                    </button>
+                </div>
+            </div>
+
+            <!-- Trips List -->
+            <div id="tripsList" class="space-y-4">
+                <!-- Trips will be loaded here -->
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden">
+                <div class="empty-state">
+                    <svg class="empty-state-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    <p class="text-gray-500 font-medium">No trips found</p>
+                    <p class="text-sm text-gray-400 mt-1">Create a new trip to get started</p>
+                    <button onclick="window.location.href='manager-create-trip.html?type=delivery'" class="btn btn-primary btn-sm mt-4">
+                        Create Trip
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="assets/js/mock-data.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/trips.js"></script>
+</body>
+</html>

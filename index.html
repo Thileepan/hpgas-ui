@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HP Gas Management - Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen flex items-center justify-center p-4">
+        <div class="max-w-md w-full">
+            <!-- Logo Section -->
+            <div class="text-center mb-8 animate-fade-in">
+                <div class="bg-gradient-to-br from-orange-500 to-orange-600 w-20 h-20 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg">
+                    <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    </svg>
+                </div>
+                <h1 class="text-3xl font-bold text-gray-900">Sree Maruthi Enterprises</h1>
+                <p class="text-gray-600 mt-2">HP Gas Management System</p>
+            </div>
+
+            <!-- Login Card -->
+            <div class="bg-white rounded-2xl shadow-xl p-8 animate-slide-up">
+                <h2 class="text-2xl font-semibold text-gray-900 mb-6">Sign In</h2>
+                
+                <form id="loginForm">
+                    <!-- Email/Phone Input -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email or Phone</label>
+                        <input type="text" id="username" 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                            placeholder="Enter your email or phone"
+                            required>
+                    </div>
+
+                    <!-- Password Input -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                        <input type="password" id="password"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                            placeholder="Enter your password"
+                            required>
+                    </div>
+
+                    <!-- Remember Me -->
+                    <div class="flex items-center justify-between mb-6">
+                        <label class="flex items-center">
+                            <input type="checkbox" class="w-4 h-4 text-orange-500 border-gray-300 rounded focus:ring-orange-500">
+                            <span class="ml-2 text-sm text-gray-600">Remember me</span>
+                        </label>
+                        <a href="#" class="text-sm text-orange-500 hover:text-orange-600">Forgot Password?</a>
+                    </div>
+
+                    <!-- Login Button -->
+                    <button type="submit" 
+                        class="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white py-3 rounded-lg font-semibold hover:from-orange-600 hover:to-orange-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                        Sign In
+                    </button>
+                </form>
+
+                <!-- Demo Credentials -->
+                <div class="mt-8 pt-6 border-t border-gray-200">
+                    <p class="text-sm font-medium text-gray-700 mb-3">Demo Credentials:</p>
+                    <div class="space-y-2 text-xs">
+                        <div class="flex justify-between items-center p-2 bg-gray-50 rounded cursor-pointer hover:bg-gray-100" onclick="fillCredentials('admin@hpgas.com', 'admin123')">
+                            <span class="font-medium text-gray-700">Super Admin</span>
+                            <span class="text-gray-500">admin@hpgas.com</span>
+                        </div>
+                        <div class="flex justify-between items-center p-2 bg-gray-50 rounded cursor-pointer hover:bg-gray-100" onclick="fillCredentials('manager@hpgas.com', 'manager123')">
+                            <span class="font-medium text-gray-700">Godown Manager</span>
+                            <span class="text-gray-500">manager@hpgas.com</span>
+                        </div>
+                        <div class="flex justify-between items-center p-2 bg-gray-50 rounded cursor-pointer hover:bg-gray-100" onclick="fillCredentials('driver@hpgas.com', 'driver123')">
+                            <span class="font-medium text-gray-700">Driver</span>
+                            <span class="text-gray-500">driver@hpgas.com</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="text-center mt-6 text-sm text-gray-500">
+                <p>&copy; 2024 Sree Maruthi Enterprises. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/mock-data.js"></script>
+</body>
+</html>
