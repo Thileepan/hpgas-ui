@@ -2,6 +2,7 @@
 
 const mockData = {
     users: [
+        // Super Admin
         {
             id: 1,
             email: 'admin@hpgas.com',
@@ -11,6 +12,7 @@ const mockData = {
             phone: '9876543210',
             godown_id: null
         },
+        // Manager - Chennai Main Godown
         {
             id: 2,
             email: 'manager@hpgas.com',
@@ -20,14 +22,73 @@ const mockData = {
             phone: '9876543211',
             godown_id: 1
         },
+        // Manager - Coimbatore Godown
         {
             id: 3,
-            email: 'driver@hpgas.com',
+            email: 'anand@hpgas.com',
+            password: 'manager123',
+            role: 'manager',
+            name: 'Anand Raj',
+            phone: '9876543212',
+            godown_id: 2
+        },
+        // Drivers - Chennai Main Godown
+        {
+            id: 4,
+            email: 'ravi@hpgas.com',
             password: 'driver123',
             role: 'driver',
-            name: 'Murugan',
-            phone: '9876543212',
+            name: 'Ravi Kumar',
+            phone: '9876543220',
             godown_id: 1
+        },
+        {
+            id: 5,
+            email: 'prakash@hpgas.com',
+            password: 'driver123',
+            role: 'driver',
+            name: 'Prakash M',
+            phone: '9876543221',
+            godown_id: 1
+        },
+        // Driver - Coimbatore Godown
+        {
+            id: 6,
+            email: 'vijay@hpgas.com',
+            password: 'driver123',
+            role: 'driver',
+            name: 'Vijay S',
+            phone: '9876543222',
+            godown_id: 2
+        },
+        // Loadmen - Chennai Main Godown
+        {
+            id: 7,
+            email: 'murugan@hpgas.com',
+            password: 'loadman123',
+            role: 'loadman',
+            name: 'Murugan',
+            phone: '9876543230',
+            godown_id: 1
+        },
+        {
+            id: 8,
+            email: 'selvam@hpgas.com',
+            password: 'loadman123',
+            role: 'loadman',
+            name: 'Selvam',
+            phone: '9876543231',
+            godown_id: 1
+        },
+        // Loadman - Coimbatore Godown
+        {
+            id: 9,
+            email: 'kumar@hpgas.com',
+            password: 'loadman123',
+            role: 'loadman',
+            name: 'Kumar',
+            phone: '9876543232',
+            godown_id: 2
         }
     ],
 
@@ -35,23 +96,27 @@ const mockData = {
         {
             id: 1,
             name: 'Chennai Main Godown',
-            address: '123, Anna Salai, Chennai',
+            address: '123, Anna Salai, Near Central Station, T. Nagar, Chennai',
             city: 'Chennai',
             state: 'Tamil Nadu',
             pincode: '600002',
-            manager_id: 2,
             phone: '044-12345678',
+            latitude: '13.0827',
+            longitude: '80.2707',
+            email: 'chennai@sreemaruthi.com',
             created_at: '2024-01-15'
         },
         {
             id: 2,
-            name: 'Coimbatore Godown',
-            address: '456, RS Puram, Coimbatore',
+            name: 'Coimbatore Branch Godown',
+            address: '456, RS Puram Main Road, Near Railway Station, Coimbatore',
             city: 'Coimbatore',
             state: 'Tamil Nadu',
             pincode: '641002',
-            manager_id: null,
             phone: '0422-987654',
+            latitude: '11.0168',
+            longitude: '76.9558',
+            email: 'coimbatore@sreemaruthi.com',
             created_at: '2024-02-10'
         }
     ],
@@ -455,9 +520,9 @@ const mockData = {
             vehicle_number: 'TN01AB1234',
             vehicle_type: 'Truck',
             godown_id: 1,
-            primary_driver_id: 3,
-            primary_loadman1_id: 4,
-            primary_loadman2_id: 5,
+            primary_driver_id: 4,  // Ravi Kumar
+            primary_loadman1_id: 7,  // Murugan
+            primary_loadman2_id: 8,  // Selvam
             status: 'active',
             created_at: '2024-01-15'
         },
@@ -466,51 +531,22 @@ const mockData = {
             vehicle_number: 'TN01CD5678',
             vehicle_type: 'Van',
             godown_id: 1,
-            primary_driver_id: null,
-            primary_loadman1_id: null,
+            primary_driver_id: 5,  // Prakash M
+            primary_loadman1_id: 7,  // Murugan
             primary_loadman2_id: null,
             status: 'active',
             created_at: '2024-01-20'
-        }
-    ],
-
-    drivers: [
+        },
         {
             id: 3,
-            name: 'Murugan',
-            phone: '9876543212',
-            license_number: 'TN0120230045678',
-            godown_id: 1,
+            vehicle_number: 'TN37EF9012',
+            vehicle_type: 'Truck',
+            godown_id: 2,
+            primary_driver_id: 6,  // Vijay S
+            primary_loadman1_id: 9,  // Kumar
+            primary_loadman2_id: null,
             status: 'active',
-            created_at: '2024-01-15'
-        },
-        {
-            id: 6,
-            name: 'Selvam',
-            phone: '9876543213',
-            license_number: 'TN0120230045679',
-            godown_id: 1,
-            status: 'active',
-            created_at: '2024-01-18'
-        }
-    ],
-
-    loadmen: [
-        {
-            id: 4,
-            name: 'Kumar',
-            phone: '9876543214',
-            godown_id: 1,
-            status: 'active',
-            created_at: '2024-01-15'
-        },
-        {
-            id: 5,
-            name: 'Raju',
-            phone: '9876543215',
-            godown_id: 1,
-            status: 'active',
-            created_at: '2024-01-15'
+            created_at: '2024-02-10'
         }
     ],
 
@@ -694,9 +730,9 @@ const mockData = {
             trip_type: 'delivery', // delivery or refill
             godown_id: 1,
             vehicle_id: 1,
-            driver_id: 3,
-            loadman1_id: 4,
-            loadman2_id: 5,
+            driver_id: 4,  // Ravi Kumar
+            loadman1_id: 7,  // Murugan
+            loadman2_id: 8,  // Selvam
             start_km: 15234,
             start_time: '2024-11-15 08:30:00',
             end_km: null,
@@ -718,8 +754,8 @@ const mockData = {
             trip_type: 'refill',
             godown_id: 1,
             vehicle_id: 2,
-            driver_id: 6,
-            loadman1_id: 4,
+            driver_id: 5,  // Prakash M
+            loadman1_id: 7,  // Murugan
             loadman2_id: null,
             filling_station_id: 1,
             start_km: 8567,
@@ -734,6 +770,27 @@ const mockData = {
             ],
             filled_details: [
                 { provider: 'HP', kg: '19', type: 'filled', quantity: 48 }
+            ]
+        },
+        {
+            id: 3,
+            dc_number: 'DC/2024/003',
+            trip_type: 'delivery',
+            godown_id: 2,
+            vehicle_id: 3,
+            driver_id: 6,  // Vijay S
+            loadman1_id: 9,  // Kumar
+            loadman2_id: null,
+            start_km: 5432,
+            start_time: '2024-11-15 07:00:00',
+            end_km: 5498,
+            end_time: '2024-11-15 14:30:00',
+            status: 'completed',
+            created_by: 3,
+            created_at: '2024-11-15 06:30:00',
+            load_details: [
+                { provider: 'HP', kg: '19', type: 'filled', quantity: 15 },
+                { provider: 'Indane', kg: '19', type: 'filled', quantity: 10 }
             ]
         }
     ],
@@ -772,6 +829,7 @@ const mockData = {
     ],
 
     inventory: [
+        // Chennai Main Godown - HP Gas
         {
             godown_id: 1,
             provider: 'HP',
@@ -808,6 +866,7 @@ const mockData = {
             in_transit: 10,
             damaged: 2
         },
+        // Chennai Main Godown - Indane
         {
             godown_id: 1,
             provider: 'Indane',
@@ -816,6 +875,53 @@ const mockData = {
             empty: 100,
             in_transit: 10,
             damaged: 5
+        },
+        {
+            godown_id: 1,
+            provider: 'Indane',
+            kg: '5',
+            filled: 100,
+            empty: 60,
+            in_transit: 8,
+            damaged: 2
+        },
+        // Coimbatore Branch Godown - HP Gas
+        {
+            godown_id: 2,
+            provider: 'HP',
+            kg: '5',
+            filled: 80,
+            empty: 40,
+            in_transit: 5,
+            damaged: 2
+        },
+        {
+            godown_id: 2,
+            provider: 'HP',
+            kg: '19',
+            filled: 200,
+            empty: 80,
+            in_transit: 15,
+            damaged: 4
+        },
+        {
+            godown_id: 2,
+            provider: 'HP',
+            kg: '35',
+            filled: 120,
+            empty: 50,
+            in_transit: 8,
+            damaged: 2
+        },
+        // Coimbatore Branch Godown - Indane
+        {
+            godown_id: 2,
+            provider: 'Indane',
+            kg: '19',
+            filled: 150,
+            empty: 60,
+            in_transit: 10,
+            damaged: 3
         }
     ]
 };
@@ -833,12 +939,6 @@ function initializeMockData() {
     }
     if (!localStorage.getItem('hpgas_vehicles')) {
         localStorage.setItem('hpgas_vehicles', JSON.stringify(mockData.vehicles));
-    }
-    if (!localStorage.getItem('hpgas_drivers')) {
-        localStorage.setItem('hpgas_drivers', JSON.stringify(mockData.drivers));
-    }
-    if (!localStorage.getItem('hpgas_loadmen')) {
-        localStorage.setItem('hpgas_loadmen', JSON.stringify(mockData.loadmen));
     }
     if (!localStorage.getItem('hpgas_filling_stations')) {
         localStorage.setItem('hpgas_filling_stations', JSON.stringify(mockData.filling_stations));
@@ -871,14 +971,6 @@ function getVehicles() {
     return JSON.parse(localStorage.getItem('hpgas_vehicles')) || [];
 }
 
-function getDrivers() {
-    return JSON.parse(localStorage.getItem('hpgas_drivers')) || [];
-}
-
-function getLoadmen() {
-    return JSON.parse(localStorage.getItem('hpgas_loadmen')) || [];
-}
-
 function getFillingStations() {
     return JSON.parse(localStorage.getItem('hpgas_filling_stations')) || [];
 }
@@ -898,6 +990,14 @@ function getInventory() {
 // Helper to save data
 function saveUsers(users) {
     localStorage.setItem('hpgas_users', JSON.stringify(users));
+}
+
+function saveGodowns(godowns) {
+    localStorage.setItem('hpgas_godowns', JSON.stringify(godowns));
+}
+
+function saveVehicles(vehicles) {
+    localStorage.setItem('hpgas_vehicles', JSON.stringify(vehicles));
 }
 
 function saveTrips(trips) {

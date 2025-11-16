@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Godown Details - HP Gas Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <style>
+        /* Tab Button Styles */
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+            color: #6B7280;
+            background-color: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        
+        .tab-btn:hover {
+            color: #F97316;
+            background-color: #FFF7ED;
+            border-radius: 0.5rem 0.5rem 0 0;
+        }
+        
+        .tab-btn.active {
+            color: #F97316;
+            border-bottom-color: #F97316;
+            font-weight: 600;
+        }
+        
+        /* Detail Item Styles */
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .detail-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #6B7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .detail-value {
+            font-size: 0.875rem;
+            color: #111827;
+            font-weight: 500;
+            padding-left: 1.5rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Desktop Sidebar -->
+    <div class="hidden lg:block sidebar">
+        <div class="p-6">
+            <div class="flex items-center gap-3 mb-8">
+                <div class="bg-gradient-to-br from-orange-500 to-orange-600 w-12 h-12 rounded-xl flex items-center justify-center">
+                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-900">HP Gas</h3>
+                    <p class="text-xs text-gray-500">Super Admin</p>
+                </div>
+            </div>
+
+            <nav class="space-y-1">
+                <a href="admin-dashboard.html" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                    </svg>
+                    Dashboard
+                </a>
+                <a href="admin-godowns.html" class="flex items-center gap-3 px-4 py-3 text-orange-600 bg-orange-50 rounded-lg font-medium">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    </svg>
+                    Godowns
+                </a>
+                <a href="customers.html" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    Customers
+                </a>
+                <a href="filling-stations.html" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+                    </svg>
+                    Filling Stations
+                </a>
+                <a href="admin-users.html" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                    Users
+                </a>
+                <a href="admin-reports.html" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Reports
+                </a>
+            </nav>
+        </div>
+
+        <div class="absolute bottom-0 left-0 right-0 p-6 border-t border-gray-200">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                    <span class="text-orange-600 font-semibold" id="userInitials">RK</span>
+                </div>
+                <div class="flex-1">
+                    <p class="font-medium text-gray-900 text-sm" id="userName">Rajesh Kumar</p>
+                    <p class="text-xs text-gray-500">Super Admin</p>
+                </div>
+            </div>
+            <button onclick="logout()" class="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 font-medium text-sm transition-colors">
+                Logout
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="lg:main-content">
+        <!-- Mobile Header -->
+        <div class="app-header">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <a href="admin-godowns.html" class="p-2 hover:bg-gray-100 rounded-lg">
+                        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                    </a>
+                    <div>
+                        <h3 class="font-bold text-gray-900" id="godownNameHeader">Loading...</h3>
+                        <p class="text-xs text-gray-500" id="godownCityHeader">Godown Details</p>
+                    </div>
+                </div>
+                <button onclick="openEditGodownModal()" class="p-2 hover:bg-gray-100 rounded-lg">
+                    <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="mobile-container animate-fade-in">
+            <!-- Godown Info Card -->
+            <div class="card mb-6 animate-slide-up">
+                <div class="flex items-start gap-4 mb-4">
+                    <div class="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <h2 class="text-xl font-bold text-gray-900" id="godownName">Loading...</h2>
+                        <p class="text-sm text-gray-600" id="godownCity">City</p>
+                        <div id="activeStatus" class="mt-2"></div>
+                    </div>
+                </div>
+                
+                <div id="godownDetails" class="space-y-3 pt-4 border-t border-gray-200">
+                    <!-- Details will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="card card-compact animate-slide-up" style="animation-delay: 0.1s">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm text-gray-600">Vehicles</span>
+                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-2xl font-bold text-gray-900" id="totalVehicles">0</div>
+                </div>
+
+                <div class="card card-compact animate-slide-up" style="animation-delay: 0.2s">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm text-gray-600">Staff</span>
+                        <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-2xl font-bold text-gray-900" id="totalStaff">0</div>
+                </div>
+
+                <div class="card card-compact animate-slide-up" style="animation-delay: 0.3s">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm text-gray-600">Active Trips</span>
+                        <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-2xl font-bold text-gray-900" id="activeTrips">0</div>
+                </div>
+
+                <div class="card card-compact animate-slide-up" style="animation-delay: 0.4s">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm text-gray-600">Filled Stock</span>
+                        <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-2xl font-bold text-gray-900" id="filledStock">0</div>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="card mb-6 animate-slide-up" style="animation-delay: 0.5s">
+                <div class="flex gap-1 overflow-x-auto pb-0 mb-4 border-b border-gray-200">
+                    <button class="tab-btn active" data-tab="inventory" onclick="switchTab('inventory')">
+                        <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                        </svg>
+                        Inventory
+                    </button>
+                    <button class="tab-btn" data-tab="team" onclick="switchTab('team')">
+                        <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                        Team
+                    </button>
+                    <button class="tab-btn" data-tab="trips" onclick="switchTab('trips')">
+                        <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        Trips
+                    </button>
+                    <button class="tab-btn" data-tab="deliveries" onclick="switchTab('deliveries')">
+                        <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Deliveries
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab Content: Inventory -->
+            <div id="inventoryTab" class="tab-content active">
+                <div id="inventoryList" class="space-y-4">
+                    <!-- Inventory items will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Tab Content: Team -->
+            <div id="teamTab" class="tab-content hidden">
+                <!-- Manager Section -->
+                <div class="card mb-4 animate-slide-up">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Manager</h3>
+                    <div id="managerInfo">
+                        <!-- Manager info will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Drivers Section -->
+                <div class="card mb-4 animate-slide-up" style="animation-delay: 0.1s">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold text-gray-900">Drivers</h3>
+                        <span class="badge badge-primary" id="driverCount">0</span>
+                    </div>
+                    <div id="driversList" class="space-y-3">
+                        <!-- Drivers will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Loadmen Section -->
+                <div class="card animate-slide-up" style="animation-delay: 0.2s">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold text-gray-900">Loadmen</h3>
+                        <span class="badge badge-primary" id="loadmenCount">0</span>
+                    </div>
+                    <div id="loadmenList" class="space-y-3">
+                        <!-- Loadmen will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content: Trips -->
+            <div id="tripsTab" class="tab-content hidden">
+                <div id="tripsList" class="space-y-4">
+                    <!-- Trips will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Tab Content: Deliveries -->
+            <div id="deliveriesTab" class="tab-content hidden">
+                <div id="deliveriesList" class="space-y-4">
+                    <!-- Deliveries will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="assets/js/mock-data.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/godown-details.js"></script>
+</body>
+</html>
