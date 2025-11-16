@@ -34,6 +34,12 @@ function login(email, password) {
     const user = users.find(u => u.email === email && u.password === password);
     
     if (user) {
+        // Check if user is active
+        if (user.status === 'inactive') {
+            showToast('Your account has been deactivated. Please contact admin.', 'error');
+            return false;
+        }
+        
         // Store session
         sessionStorage.setItem('hpgas_current_user', JSON.stringify(user));
         

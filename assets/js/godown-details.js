@@ -274,29 +274,84 @@ function loadInventory() {
 
 function loadTeam() {
     const users = getUsers().filter(u => u.godown_id === currentGodownId);
-    const manager = users.find(u => u.role === 'manager');
+    const managers = users.filter(u => u.role === 'manager');
     const drivers = users.filter(u => u.role === 'driver');
     const loadmen = users.filter(u => u.role === 'loadman');
 
-    // Load Manager
-    if (manager) {
-        $('#managerInfo').html(`
-            <div class="flex items-center gap-4 p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg">
-                <div class="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center">
-                    <span class="text-white font-bold text-xl">${manager.name.split(' ').map(n => n[0]).join('')}</span>
+    // Load Managers Section
+    $('#managerCount').text(managers.length);
+    
+    if (managers.length > 0) {
+        let managersHtml = '';
+        managers.forEach((manager, index) => {
+            const statusBadge = manager.status === 'inactive' 
+                ? '<span class="badge badge-secondary ml-2">Deactivated</span>'
+                : '';
+            
+            managersHtml += `
+                <div class="flex items-center gap-4 p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg border-2 border-orange-200 mb-3" style="animation: slideUp 0.5s ease-out ${index * 0.1}s both">
+                    <div class="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span class="text-white font-bold text-xl">${manager.name.split(' ').map(n => n[0]).join('')}</span>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2">
+                            <h4 class="font-bold text-gray-900">${manager.name}</h4>
+                            ${statusBadge}
+                        </div>
+                        <p class="text-sm text-gray-600">${manager.email}</p>
+                        <p class="text-sm text-gray-600 mt-1">${manager.phone}</p>
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <button onclick="editManager(${manager.id})" class="px-4 py-2 bg-white hover:bg-gray-50 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 transition-colors">
+                            <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                            </svg>
+                            Edit
+                        </button>
+                        ${manager.status !== 'inactive' ? `
+                            <button onclick="deactivateManager(${manager.id})" class="px-4 py-2 bg-red-50 hover:bg-red-100 border border-red-300 rounded-lg text-sm font-medium text-red-700 transition-colors">
+                                <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+                                </svg>
+                                Deactivate
+                            </button>
+                        ` : `
+                            <button onclick="activateManager(${manager.id})" class="px-4 py-2 bg-green-50 hover:bg-green-100 border border-green-300 rounded-lg text-sm font-medium text-green-700 transition-colors">
+                                <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Activate
+                            </button>
+                        `}
+                    </div>
                 </div>
-                <div class="flex-1">
-                    <h4 class="font-bold text-gray-900">${manager.name}</h4>
-                    <p class="text-sm text-gray-600">${manager.email}</p>
-                    <p class="text-sm text-gray-600 mt-1">${manager.phone}</p>
-                </div>
-                <span class="badge badge-primary">Manager</span>
-            </div>
-        `);
+            `;
+        });
+        
+        // Add button to add more managers
+        managersHtml += `
+            <button onclick="openAddManagerModal()" class="w-full p-4 border-2 border-dashed border-orange-300 rounded-lg text-orange-600 hover:bg-orange-50 hover:border-orange-400 transition-colors">
+                <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                <span class="font-medium">Add Another Manager</span>
+            </button>
+        `;
+        
+        $('#managerInfo').html(managersHtml);
     } else {
         $('#managerInfo').html(`
             <div class="empty-state py-8">
-                <p class="text-gray-500">No manager assigned</p>
+                <svg class="empty-state-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+                <p class="text-gray-500 font-medium">No managers assigned</p>
+                <button onclick="openAddManagerModal()" class="btn btn-primary btn-sm mt-4">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Add Manager
+                </button>
             </div>
         `);
     }
@@ -306,13 +361,19 @@ function loadTeam() {
     if (drivers.length > 0) {
         let driversHtml = '';
         drivers.forEach((driver, index) => {
+            const statusBadge = driver.status === 'inactive' 
+                ? '<span class="badge badge-secondary ml-2">Inactive</span>'
+                : '';
             driversHtml += `
                 <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg" style="animation: slideUp 0.5s ease-out ${index * 0.1}s both">
                     <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                         <span class="text-blue-600 font-semibold">${driver.name.split(' ').map(n => n[0]).join('')}</span>
                     </div>
                     <div class="flex-1">
-                        <h4 class="font-semibold text-gray-900">${driver.name}</h4>
+                        <div class="flex items-center gap-2">
+                            <h4 class="font-semibold text-gray-900">${driver.name}</h4>
+                            ${statusBadge}
+                        </div>
                         <p class="text-sm text-gray-600">${driver.phone}</p>
                     </div>
                     <span class="badge badge-secondary">Driver</span>
@@ -333,13 +394,19 @@ function loadTeam() {
     if (loadmen.length > 0) {
         let loadmenHtml = '';
         loadmen.forEach((loadman, index) => {
+            const statusBadge = loadman.status === 'inactive' 
+                ? '<span class="badge badge-secondary ml-2">Inactive</span>'
+                : '';
             loadmenHtml += `
                 <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg" style="animation: slideUp 0.5s ease-out ${index * 0.1}s both">
                     <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                         <span class="text-green-600 font-semibold">${loadman.name.split(' ').map(n => n[0]).join('')}</span>
                     </div>
                     <div class="flex-1">
-                        <h4 class="font-semibold text-gray-900">${loadman.name}</h4>
+                        <div class="flex items-center gap-2">
+                            <h4 class="font-semibold text-gray-900">${loadman.name}</h4>
+                            ${statusBadge}
+                        </div>
                         <p class="text-sm text-gray-600">${loadman.phone}</p>
                     </div>
                     <span class="badge badge-secondary">Loadman</span>
@@ -491,4 +558,119 @@ function loadDeliveries() {
 
 function openEditGodownModal() {
     window.location.href = `admin-godowns.html?edit=${currentGodownId}`;
+}
+
+// ==================== MANAGER MANAGEMENT ====================
+
+function openAddManagerModal() {
+    $('#managerModalTitle').text('Add Manager');
+    $('#managerSubmitBtn').text('Add Manager');
+    $('#managerForm')[0].reset();
+    $('#managerId').val('');
+    $('#managerPasswordGroup').show();
+    $('#managerPassword').prop('required', true);
+    $('#managerModal').removeClass('hidden');
+}
+
+function editManager(managerId) {
+    const users = getUsers();
+    const manager = users.find(u => u.id === managerId);
+    
+    if (!manager) return;
+    
+    $('#managerModalTitle').text('Edit Manager');
+    $('#managerSubmitBtn').text('Update Manager');
+    $('#managerId').val(manager.id);
+    $('#managerName').val(manager.name);
+    $('#managerEmail').val(manager.email);
+    $('#managerPhone').val(manager.phone);
+    $('#managerPasswordGroup').hide();
+    $('#managerPassword').prop('required', false);
+    $('#managerModal').removeClass('hidden');
+}
+
+function closeManagerModal() {
+    $('#managerModal').addClass('hidden');
+    $('#managerForm')[0].reset();
+}
+
+function saveManager(event) {
+    event.preventDefault();
+    
+    const users = getUsers();
+    const managerId = $('#managerId').val();
+    const managerData = {
+        name: $('#managerName').val().trim(),
+        email: $('#managerEmail').val().trim().toLowerCase(),
+        phone: $('#managerPhone').val().trim(),
+        role: 'manager',
+        godown_id: currentGodownId,
+        status: 'active'
+    };
+    
+    // Check if email already exists (for different user)
+    const existingUser = users.find(u => u.email === managerData.email && u.id != managerId);
+    if (existingUser) {
+        showToast('Email already exists!', 'error');
+        return;
+    }
+    
+    if (managerId) {
+        // Update existing manager
+        const index = users.findIndex(u => u.id == managerId);
+        if (index !== -1) {
+            users[index] = {
+                ...users[index],
+                ...managerData
+            };
+            showToast('Manager updated successfully!', 'success');
+        }
+    } else {
+        // Add new manager
+        const password = $('#managerPassword').val().trim();
+        if (!password) {
+            showToast('Password is required!', 'error');
+            return;
+        }
+        
+        const newManager = {
+            id: Date.now(),
+            ...managerData,
+            password: password
+        };
+        users.push(newManager);
+        showToast('Manager added successfully!', 'success');
+    }
+    
+    saveUsers(users);
+    closeManagerModal();
+    loadTeam();
+}
+
+function deactivateManager(managerId) {
+    if (!confirm('Are you sure you want to deactivate this manager? They will not be able to login.')) {
+        return;
+    }
+    
+    const users = getUsers();
+    const manager = users.find(u => u.id === managerId);
+    
+    if (manager) {
+        manager.status = 'inactive';
+        saveUsers(users);
+        showToast('Manager deactivated successfully!', 'success');
+        loadTeam();
+    }
+}
+
+function activateManager(managerId) {
+    const users = getUsers();
+    const manager = users.find(u => u.id === managerId);
+    
+    if (manager) {
+        manager.status = 'active';
+        saveUsers(users);
+        showToast('Manager activated successfully!', 'success');
+        loadTeam();
+    }
 }

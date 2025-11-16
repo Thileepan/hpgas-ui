@@ -10,7 +10,8 @@ const mockData = {
             role: 'super_admin',
             name: 'Rajesh Kumar',
             phone: '9876543210',
-            godown_id: null
+            godown_id: null,
+            status: 'active'
         },
         // Manager - Chennai Main Godown
         {
@@ -20,7 +21,8 @@ const mockData = {
             role: 'manager',
             name: 'Suresh Babu',
             phone: '9876543211',
-            godown_id: 1
+            godown_id: 1,
+            status: 'active'
         },
         // Manager - Coimbatore Godown
         {
@@ -30,7 +32,8 @@ const mockData = {
             role: 'manager',
             name: 'Anand Raj',
             phone: '9876543212',
-            godown_id: 2
+            godown_id: 2,
+            status: 'active'
         },
         // Drivers - Chennai Main Godown
         {
@@ -40,7 +43,8 @@ const mockData = {
             role: 'driver',
             name: 'Ravi Kumar',
             phone: '9876543220',
-            godown_id: 1
+            godown_id: 1,
+            status: 'active'
         },
         {
             id: 5,
@@ -49,7 +53,8 @@ const mockData = {
             role: 'driver',
             name: 'Prakash M',
             phone: '9876543221',
-            godown_id: 1
+            godown_id: 1,
+            status: 'active'
         },
         // Driver - Coimbatore Godown
         {
@@ -59,7 +64,8 @@ const mockData = {
             role: 'driver',
             name: 'Vijay S',
             phone: '9876543222',
-            godown_id: 2
+            godown_id: 2,
+            status: 'active'
         },
         // Loadmen - Chennai Main Godown
         {
@@ -69,7 +75,8 @@ const mockData = {
             role: 'loadman',
             name: 'Murugan',
             phone: '9876543230',
-            godown_id: 1
+            godown_id: 1,
+            status: 'active'
         },
         {
             id: 8,
@@ -78,7 +85,8 @@ const mockData = {
             role: 'loadman',
             name: 'Selvam',
             phone: '9876543231',
-            godown_id: 1
+            godown_id: 1,
+            status: 'active'
         },
         // Loadman - Coimbatore Godown
         {
@@ -88,7 +96,8 @@ const mockData = {
             role: 'loadman',
             name: 'Kumar',
             phone: '9876543232',
-            godown_id: 2
+            godown_id: 2,
+            status: 'active'
         }
     ],
 
