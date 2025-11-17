@@ -2,7 +2,7 @@
 
 let loadItemCounter = 0;
 
-$(document).ready(function() {
+$(document).ready(async function() {
     const user = checkAuth();
     if (!user || user.role !== 'manager') {
         logout();
@@ -15,7 +15,7 @@ $(document).ready(function() {
     $('#userInitials').text(initials);
 
     // Get godown info
-    const godowns = getGodowns();
+    const godowns = await getGodowns();
     const godown = godowns.find(g => g.id === user.godown_id);
     if (godown) {
         $('#godownName').text(godown.name);
@@ -82,8 +82,8 @@ function switchTripType(type) {
     }
 }
 
-function generateDCNumber() {
-    const trips = getTrips();
+async function generateDCNumber() {
+    const trips = await getTrips();
     const year = new Date().getFullYear();
     
     // Get the last DC number for this year
@@ -104,9 +104,9 @@ function generateDCNumber() {
     $('#dcNumber').text(dcNumber);
 }
 
-function loadVehicles() {
+async function loadVehicles() {
     const user = getCurrentUser();
-    const vehicles = getVehicles().filter(v => v.godown_id === user.godown_id && v.status === 'active');
+    const vehicles = (await getVehicles()).filter(v => v.godown_id === user.godown_id && v.status === 'active');
     
     let html = '<option value="">-- Select Vehicle --</option>';
     vehicles.forEach(vehicle => {
@@ -116,10 +116,10 @@ function loadVehicles() {
     $('#vehicleSelect').html(html);
 }
 
-function loadDrivers() {
+async function loadDrivers() {
     const user = getCurrentUser();
-    const drivers = getDrivers().filter(d => d.godown_id === user.godown_id && d.status === 'active');
-    const users = getUsers().filter(u => u.role === 'driver' && u.godown_id === user.godown_id);
+    const drivers = (await getDrivers()).filter(d => d.godown_id === user.godown_id && d.status === 'active');
+    const users = (await getUsers()).filter(u => u.role === 'driver' && u.godown_id === user.godown_id);
     
     let html = '<option value="">-- Use primary driver --</option>';
     
@@ -130,9 +130,9 @@ function loadDrivers() {
     $('#driverOverride').html(html);
 }
 
-function loadLoadmen() {
+async function loadLoadmen() {
     const user = getCurrentUser();
-    const loadmen = getLoadmen().filter(l => l.godown_id === user.godown_id && l.status === 'active');
+    const loadmen = (await getLoadmen()).filter(l => l.godown_id === user.godown_id && l.status === 'active');
     
     let html = '<option value="">-- Select Loadman --</option>';
     loadmen.forEach(loadman => {
@@ -143,8 +143,8 @@ function loadLoadmen() {
     $('#loadman2Override').html(html);
 }
 
-function loadFillingStations() {
-    const stations = getFillingStations();
+async function loadFillingStations() {
+    const stations = await getFillingStations();
     
     let html = '<option value="">-- Select Filling Station --</option>';
     stations.forEach(station => {
@@ -154,7 +154,7 @@ function loadFillingStations() {
     $('#fillingStationSelect').html(html);
 }
 
-function loadVehicleDetails() {
+async function loadVehicleDetails() {
     const vehicleId = parseInt($('#vehicleSelect').val());
     
     if (!vehicleId) {
@@ -162,15 +162,15 @@ function loadVehicleDetails() {
         return;
     }
     
-    const vehicles = getVehicles();
+    const vehicles = await getVehicles();
     const vehicle = vehicles.find(v => v.id === vehicleId);
     
     if (!vehicle) return;
     
     // Get driver and loadmen details
-    const users = getUsers();
-    const drivers = getDrivers();
-    const loadmen = getLoadmen();
+    const users = await getUsers();
+    const drivers = await getDrivers();
+    const loadmen = await getLoadmen();
     
     const driver = users.find(u => u.id === vehicle.primary_driver_id) || drivers.find(d => d.id === vehicle.primary_driver_id);
     const loadman1 = loadmen.find(l => l.id === vehicle.primary_loadman1_id);
@@ -261,7 +261,7 @@ function removeLoadItem(id) {
     });
 }
 
-function createTrip() {
+async function createTrip() {
     // Validate form
     const vehicleId = parseInt($('#vehicleSelect').val());
     const startKm = parseInt($('#startKm').val());
@@ -326,8 +326,57 @@ function createTrip() {
         return;
     }
     
+    // ===== VALIDATE INVENTORY AVAILABILITY =====
+    const user = getCurrentUser();
+    const inventory = await getInventory();
+    const godownInventory = inventory.filter(i => i.godown_id === user.godown_id);
+    
+    // Check each load item against available inventory
+    let insufficientStock = false;
+    let insufficientItems = [];
+    
+    for (const load of loadDetails) {
+        const invItem = godownInventory.find(i => 
+            i.provider === load.provider &&
+            parseFloat(i.kg) === parseFloat(load.kg)
+        );
+        
+        if (!invItem) {
+            insufficientStock = true;
+            insufficientItems.push(`${load.provider} ${load.kg}kg (Not found in inventory)`);
+            continue;
+        }
+        
+        // Check if sufficient stock available
+        const availableStock = load.type === 'filled' ? invItem.filled : invItem.empty;
+        
+        if (availableStock < load.quantity) {
+            insufficientStock = true;
+            insufficientItems.push(
+                `${load.provider} ${load.kg}kg ${load.type}: Need ${load.quantity}, Available ${availableStock}`
+            );
+        }
+    }
+    
+    if (insufficientStock) {
+        showToast('Insufficient inventory for this trip!', 'error');
+        
+        // Show detailed error message
+        let errorMsg = '<div class="text-left"><p class="font-semibold mb-2">Insufficient Stock:</p><ul class="list-disc pl-5 space-y-1">';
+        insufficientItems.forEach(item => {
+            errorMsg += `<li class="text-sm">${item}</li>`;
+        });
+        errorMsg += '</ul></div>';
+        
+        // Show modal or detailed alert
+        $('#insufficientStockDetails').html(errorMsg);
+        $('#insufficientStockModal').removeClass('hidden');
+        
+        return;
+    }
+    
     // Get vehicle details
-    const vehicles = getVehicles();
+    const vehicles = await getVehicles();
     const vehicle = vehicles.find(v => v.id === vehicleId);
     
     // Get crew (check for overrides)
@@ -339,11 +388,8 @@ function createTrip() {
     const loadman1Id = loadman1Override || vehicle.primary_loadman1_id;
     const loadman2Id = loadman2Override || vehicle.primary_loadman2_id;
     
-    // Get user and godown
-    const user = getCurrentUser();
-    
     // Create trip object
-    const trips = getTrips();
+    const trips = await getTrips();
     const newTripId = trips.length > 0 ? Math.max(...trips.map(t => t.id)) + 1 : 1;
     
     const trip = {
@@ -368,10 +414,11 @@ function createTrip() {
     
     // Save trip
     trips.push(trip);
-    saveTrips(trips);
+    await saveTrips(trips);
     
-    // Update inventory (reduce stock)
-    updateInventoryForTrip(trip, 'outward');
+    // Update inventory when trip starts
+    // Cylinders leaving godown: reduce stock, increase in_transit
+    await updateInventoryForTripStart(trip);
     
     showToast('Trip created successfully!', 'success');
     
@@ -381,37 +428,43 @@ function createTrip() {
     }, 1000);
 }
 
-function updateInventoryForTrip(trip, direction) {
-    const inventory = getInventory();
+// Update inventory when trip starts (cylinders leave godown)
+async function updateInventoryForTripStart(trip) {
+    const inventory = await getInventory();
+    
+    console.log('Updating inventory for trip start:', trip.dc_number);
     
     trip.load_details.forEach(load => {
         const invItem = inventory.find(i => 
             i.godown_id === trip.godown_id &&
             i.provider === load.provider &&
-            i.kg === load.kg
+            parseFloat(i.kg) === parseFloat(load.kg)
         );
         
-        if (!invItem) return;
+        if (!invItem) {
+            console.warn(`Inventory item not found: ${load.provider} ${load.kg}kg`);
+            return;
+        }
         
-        if (direction === 'outward') {
-            // Moving out - reduce stock, increase in_transit
-            if (load.type === 'filled') {
-                invItem.filled = Math.max(0, invItem.filled - load.quantity);
-                invItem.in_transit += load.quantity;
-            } else if (load.type === 'empty') {
-                invItem.empty = Math.max(0, invItem.empty - load.quantity);
-                invItem.in_transit += load.quantity;
-            }
-        } else if (direction === 'inward') {
-            // Coming back - reduce in_transit, increase stock
-            invItem.in_transit = Math.max(0, invItem.in_transit - load.quantity);
-            if (load.type === 'filled') {
-                invItem.filled += load.quantity;
-            } else if (load.type === 'empty') {
-                invItem.empty += load.quantity;
-            }
+        // Cylinders leaving godown on vehicle
+        if (load.type === 'filled') {
+            // Reduce filled stock, increase in_transit
+            invItem.filled = Math.max(0, invItem.filled - load.quantity);
+            invItem.in_transit += load.quantity;
+            console.log(`${load.provider} ${load.kg}kg: -${load.quantity} filled, +${load.quantity} in_transit`);
+        } else if (load.type === 'empty') {
+            // Reduce empty stock, increase in_transit
+            invItem.empty = Math.max(0, invItem.empty - load.quantity);
+            invItem.in_transit += load.quantity;
+            console.log(`${load.provider} ${load.kg}kg: -${load.quantity} empty, +${load.quantity} in_transit`);
         }
     });
     
-    saveInventory(inventory);
+    await saveInventory(inventory);
+    console.log('Inventory updated for trip start');
+}
+
+// Close insufficient stock modal
+function closeInsufficientStockModal() {
+    $('#insufficientStockModal').addClass('hidden');
 }

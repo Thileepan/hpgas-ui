@@ -1,6 +1,7 @@
 // Driver Dashboard JavaScript
+// UPDATED: Now using Supabase with async/await instead of localStorage
 
-$(document).ready(function() {
+$(document).ready(async function() {  // ← Made async
     const user = checkAuth();
     if (!user || user.role !== 'driver') {
         logout();
@@ -12,13 +13,20 @@ $(document).ready(function() {
     const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase();
     $('#userInitials').text(initials);
 
-    loadDashboardData();
+    await loadDashboardData();  // ← Added await
+    
+    // Auto-refresh every 30 seconds to check for new trips
+    setInterval(async function() {  // ← Made async
+        console.log('Auto-refreshing dashboard...');
+        await loadDashboardData();  // ← Added await
+    }, 30000);
 });
 
-function loadDashboardData() {
+async function loadDashboardData() {  // ← Made async
     const user = getCurrentUser();
-    const trips = getTrips();
-    const deliveries = getDeliveries();
+    // UPDATED: Made all data fetching async
+    const trips = await getTrips();  // ← Added await
+    const deliveries = await getDeliveries();  // ← Added await
 
     // Get driver's trips
     const driverTrips = trips.filter(t => t.driver_id === user.id);
@@ -32,20 +40,34 @@ function loadDashboardData() {
     });
     $('#todayDeliveries').text(todayDeliveries.length);
 
-    // Check for active trip
-    const activeTrip = driverTrips.find(t => t.status === 'ongoing');
-    if (activeTrip) {
-        loadCurrentTrip(activeTrip);
+    // Check for active trip - GET THE LATEST ONE BY CREATED_AT
+    const activeTrips = driverTrips
+        .filter(t => t.status === 'ongoing')
+        .sort((a, b) => {
+            // Sort by created_at descending (newest first)
+            const dateA = new Date(a.created_at);
+            const dateB = new Date(b.created_at);
+            return dateB - dateA;
+        });
+    
+    if (activeTrips.length > 0) {
+        const latestTrip = activeTrips[0]; // Get the most recently created trip
+        console.log('Latest trip:', latestTrip.dc_number, 'Created at:', latestTrip.created_at);
+        await loadCurrentTrip(latestTrip);  // ← Added await
+        $('#currentTripCard').show();
+    } else {
+        $('#currentTripCard').hide();
     }
 
     // Load recent deliveries
-    loadRecentDeliveries(deliveries, driverTrips);
+    await loadRecentDeliveries(deliveries, driverTrips);  // ← Added await
 }
 
-function loadCurrentTrip(trip) {
-    const vehicles = getVehicles();
-    const loadmen = getLoadmen();
-    const users = getUsers();
+async function loadCurrentTrip(trip) {  // ← Made async
+    // UPDATED: Made all data fetching async
+    const vehicles = await getVehicles();  // ← Added await
+    const loadmen = await getLoadmen();  // ← Added await
+    const users = await getUsers();  // ← Added await
     
     const vehicle = vehicles.find(v => v.id === trip.vehicle_id);
     const loadman1 = users.find(u => u.id === trip.loadman1_id) || loadmen.find(l => l.id === trip.loadman1_id);
@@ -59,15 +81,33 @@ function loadCurrentTrip(trip) {
     const durationStr = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
 
     // Count deliveries made in this trip
-    const deliveries = getDeliveries();
+    const deliveries = await getDeliveries();  // ← Added await
     const tripDeliveries = deliveries.filter(d => d.trip_id === trip.id);
+
+    // Calculate total load from load_details
+    let totalLoad = 0;
+    if (trip.load_details && trip.load_details.length > 0) {
+        trip.load_details.forEach(item => {
+            totalLoad += item.quantity;
+        });
+    }
+
+    // Check if trip was created in the last 30 minutes
+    const createdAt = new Date(trip.created_at);
+    const timeSinceCreation = Math.floor((now - createdAt) / 1000 / 60); // minutes
+    const isNew = timeSinceCreation <= 30;
+    const newBadge = isNew ? '<span class="px-2 py-1 bg-yellow-400 text-yellow-900 text-xs font-bold rounded-full animate-pulse">NEW</span>' : '';
 
     const html = `
         <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-5 text-white shadow-xl">
             <div class="flex items-center justify-between mb-4">
                 <div>
-                    <p class="text-white/80 text-sm mb-1">Current Trip</p>
+                    <div class="flex items-center gap-2 mb-2">
+                        <p class="text-white/80 text-sm">Current Trip</p>
+                        ${newBadge}
+                    </div>
                     <h2 class="text-2xl font-bold">${trip.dc_number}</h2>
+                    <p class="text-sm text-white/90 mt-1">${trip.trip_type === 'delivery' ? 'Delivery Trip' : 'Refill Trip'}</p>
                 </div>
                 <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center animate-pulse-slow">
                     <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -76,7 +116,7 @@ function loadCurrentTrip(trip) {
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-3 mb-4">
+            <div class="grid grid-cols-3 gap-3 mb-4">
                 <div class="bg-white/10 rounded-lg p-3 backdrop-blur-sm">
                     <p class="text-white/70 text-xs mb-1">Duration</p>
                     <p class="font-semibold text-lg">${durationStr}</p>
@@ -84,6 +124,10 @@ function loadCurrentTrip(trip) {
                 <div class="bg-white/10 rounded-lg p-3 backdrop-blur-sm">
                     <p class="text-white/70 text-xs mb-1">Deliveries</p>
                     <p class="font-semibold text-lg">${tripDeliveries.length}</p>
+                </div>
+                <div class="bg-white/10 rounded-lg p-3 backdrop-blur-sm">
+                    <p class="text-white/70 text-xs mb-1">Load</p>
+                    <p class="font-semibold text-lg">${totalLoad}</p>
                 </div>
             </div>
 
@@ -106,6 +150,14 @@ function loadCurrentTrip(trip) {
                     </svg>
                     <span class="text-white/90">Loadmen: <strong>${loadman1?.name || 'N/A'}${loadman2 ? ', ' + loadman2.name : ''}</strong></span>
                 </div>
+                ${isNew ? `
+                <div class="flex items-center gap-2 text-sm bg-yellow-400/20 rounded-lg p-2 mt-2">
+                    <svg class="w-4 h-4 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span class="text-yellow-100">Created ${timeSinceCreation} minute${timeSinceCreation !== 1 ? 's' : ''} ago by manager</span>
+                </div>
+                ` : ''}
             </div>
 
             <button onclick="window.location.href='driver-trip.html'" 
@@ -115,11 +167,12 @@ function loadCurrentTrip(trip) {
         </div>
     `;
 
-    $('#currentTripCard').html(html).show();
+    $('#currentTripCard').html(html);
 }
 
-function loadRecentDeliveries(deliveries, driverTrips) {
-    const customers = getCustomers();
+async function loadRecentDeliveries(deliveries, driverTrips) {  // ← Made async
+    // UPDATED: Made data fetching async
+    const customers = await getCustomers();  // ← Added await
     const tripIds = driverTrips.map(t => t.id);
     
     // Get recent deliveries for this driver
@@ -153,7 +206,7 @@ function loadRecentDeliveries(deliveries, driverTrips) {
 
             html += `
                 <div class="delivery-item cursor-pointer hover:bg-gray-100 transition-colors"
-                     onclick="window.location.href='driver-delivery-details.html?id=${delivery.id}'"
+                     onclick="window.location.href='driver-history.html'"
                      style="animation: slideUp 0.5s ease-out ${index * 0.1}s both">
                     <div class="flex items-start justify-between mb-2">
                         <div class="flex-1">
@@ -203,4 +256,10 @@ function showTab(tab) {
             window.location.href = 'driver-profile.html';
             break;
     }
+}
+
+// Refresh dashboard to check for new trips
+async function refreshDashboard() {  // ← Made async
+    showToast('Checking for new trips...', 'success');
+    await loadDashboardData();  // ← Added await
 }

@@ -1,8 +1,9 @@
 // Manager Trips List JavaScript
+// UPDATED: Now using Supabase instead of localStorage
 
 let currentFilter = 'all';
 
-$(document).ready(function() {
+$(document).ready(async function() {  // ← Made async
     const user = checkAuth();
     if (!user || user.role !== 'manager') {
         logout();
@@ -14,8 +15,8 @@ $(document).ready(function() {
     const initials = user.name.split(' ').map(n => n[0]).join('');
     $('#userInitials').text(initials);
 
-    // Get godown info
-    const godowns = getGodowns();
+    // Get godown info - UPDATED: Made async
+    const godowns = await getGodowns();
     const godown = godowns.find(g => g.id === user.godown_id);
     if (godown) {
         $('#godownName').text(godown.name);
@@ -23,20 +24,20 @@ $(document).ready(function() {
     }
 
     // Load trips
-    loadTrips();
+    await loadTrips();
 
     // Filter button handlers
-    $('.trip-filter-btn').click(function() {
+    $('.trip-filter-btn').click(async function() {  // ← Made async
         $('.trip-filter-btn').removeClass('active');
         $(this).addClass('active');
         currentFilter = $(this).data('filter');
-        loadTrips();
+        await loadTrips();  // ← Added await
     });
 });
 
-function loadTrips() {
+async function loadTrips() {  // ← Made async
     const user = getCurrentUser();
-    let trips = getTrips().filter(t => t.godown_id === user.godown_id);
+    let trips = (await getTrips()).filter(t => t.godown_id === user.godown_id);  // ← Added await
     
     // Apply filter
     if (currentFilter === 'ongoing') {
@@ -61,11 +62,12 @@ function loadTrips() {
     $('#emptyState').hide();
     $('#tripsList').show();
     
-    const vehicles = getVehicles();
-    const drivers = getDrivers();
-    const users = getUsers();
-    const deliveries = getDeliveries();
-    const fillingStations = getFillingStations();
+    // UPDATED: Made all data fetching async
+    const vehicles = await getVehicles();
+    const drivers = await getDrivers();
+    const users = await getUsers();
+    const deliveries = await getDeliveries();
+    const fillingStations = await getFillingStations();
     
     let html = '';
     

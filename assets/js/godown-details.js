@@ -1,9 +1,10 @@
 // Godown Details JavaScript
+// UPDATED: Now using Supabase instead of localStorage
 
 let currentGodownId = null;
 let currentTab = 'inventory';
 
-$(document).ready(function() {
+$(document).ready(async function() {  // ← Made async
     const user = checkAuth();
     if (!user || user.role !== 'super_admin') {
         logout();
@@ -27,11 +28,11 @@ $(document).ready(function() {
     // Convert to number for comparison
     currentGodownId = parseInt(currentGodownId);
 
-    loadGodownDetails();
+    await loadGodownDetails();
 });
 
-function loadGodownDetails() {
-    const godowns = getGodowns();
+async function loadGodownDetails() {  // ← Made async
+    const godowns = await getGodowns();  // ← Added await
     const godown = godowns.find(g => g.id === currentGodownId);
 
     if (!godown) {
@@ -49,17 +50,17 @@ function loadGodownDetails() {
     $('#godownCity').text(`${godown.city}, ${godown.state}`);
 
     // Load godown details
-    loadGodownInfo(godown);
+    await loadGodownInfo(godown);
     
     // Load stats
-    loadStats();
+    await loadStats();
 
     // Load current tab
-    loadTabContent(currentTab);
+    await loadTabContent(currentTab);
 }
 
-function loadGodownInfo(godown) {
-    const trips = getTrips().filter(t => t.godown_id === currentGodownId && t.status === 'ongoing');
+async function loadGodownInfo(godown) {  // ← Made async
+    const trips = (await getTrips()).filter(t => t.godown_id === currentGodownId && t.status === 'ongoing');  // ← Added await
     
     let statusHtml = '';
     if (trips.length > 0) {
@@ -136,11 +137,12 @@ function loadGodownInfo(godown) {
     $('#godownDetails').html(detailsHtml);
 }
 
-function loadStats() {
-    const vehicles = getVehicles().filter(v => v.godown_id === currentGodownId);
-    const users = getUsers().filter(u => u.godown_id === currentGodownId && (u.role === 'manager' || u.role === 'driver' || u.role === 'loadman'));
-    const trips = getTrips().filter(t => t.godown_id === currentGodownId && t.status === 'ongoing');
-    const inventory = getInventory().filter(i => i.godown_id === currentGodownId);
+async function loadStats() {  // ← Made async
+    // UPDATED: Made all data fetching async
+    const vehicles = (await getVehicles()).filter(v => v.godown_id === currentGodownId);
+    const users = (await getUsers()).filter(u => u.godown_id === currentGodownId && (u.role === 'manager' || u.role === 'driver' || u.role === 'loadman'));
+    const trips = (await getTrips()).filter(t => t.godown_id === currentGodownId && t.status === 'ongoing');
+    const inventory = (await getInventory()).filter(i => i.godown_id === currentGodownId);
     const totalFilled = inventory.reduce((sum, item) => sum + item.filled, 0);
 
     $('#totalVehicles').text(vehicles.length);
@@ -149,7 +151,7 @@ function loadStats() {
     $('#filledStock').text(totalFilled);
 }
 
-function switchTab(tab) {
+async function switchTab(tab) {  // ← Made async
     currentTab = tab;
     
     // Update tab buttons
@@ -161,28 +163,28 @@ function switchTab(tab) {
     $(`#${tab}Tab`).removeClass('hidden');
     
     // Load content
-    loadTabContent(tab);
+    await loadTabContent(tab);  // ← Added await
 }
 
-function loadTabContent(tab) {
+async function loadTabContent(tab) {  // ← Made async
     switch(tab) {
         case 'inventory':
-            loadInventory();
+            await loadInventory();
             break;
         case 'team':
-            loadTeam();
+            await loadTeam();
             break;
         case 'trips':
-            loadTrips();
+            await loadTrips();
             break;
         case 'deliveries':
-            loadDeliveries();
+            await loadDeliveries();
             break;
     }
 }
 
-function loadInventory() {
-    const inventory = getInventory().filter(i => i.godown_id === currentGodownId);
+async function loadInventory() {  // ← Made async
+    const inventory = (await getInventory()).filter(i => i.godown_id === currentGodownId);  // ← Added await
     
     if (inventory.length === 0) {
         $('#inventoryList').html(`
@@ -212,58 +214,40 @@ function loadInventory() {
         const totalEmpty = items.reduce((sum, item) => sum + item.empty, 0);
         const totalInTransit = items.reduce((sum, item) => sum + item.in_transit, 0);
         const totalDamaged = items.reduce((sum, item) => sum + item.damaged, 0);
-        const total = totalFilled + totalEmpty + totalInTransit;
-        const filledPercentage = total > 0 ? Math.round((totalFilled / total) * 100) : 0;
 
         html += `
-            <div class="card animate-slide-up" style="animation-delay: ${providerIndex * 0.1}s">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-bold text-gray-900">${provider}</h3>
-                    <span class="text-sm font-medium text-orange-600">${filledPercentage}% Filled</span>
-                </div>
-
+            <div class="card mb-4 animate-slide-up" style="animation-delay: ${providerIndex * 0.1}s">
+                <h3 class="font-bold text-lg mb-4">${provider}</h3>
                 <div class="grid grid-cols-4 gap-3 mb-4">
-                    <div class="p-3 bg-green-50 rounded-lg text-center">
-                        <p class="text-xs text-green-600 font-medium mb-1">Filled</p>
+                    <div class="text-center p-3 bg-green-50 rounded-lg">
                         <p class="text-2xl font-bold text-green-600">${totalFilled}</p>
+                        <p class="text-xs text-gray-600">Filled</p>
                     </div>
-                    <div class="p-3 bg-gray-50 rounded-lg text-center">
-                        <p class="text-xs text-gray-600 font-medium mb-1">Empty</p>
+                    <div class="text-center p-3 bg-gray-50 rounded-lg">
                         <p class="text-2xl font-bold text-gray-600">${totalEmpty}</p>
+                        <p class="text-xs text-gray-600">Empty</p>
                     </div>
-                    <div class="p-3 bg-orange-50 rounded-lg text-center">
-                        <p class="text-xs text-orange-600 font-medium mb-1">Transit</p>
+                    <div class="text-center p-3 bg-orange-50 rounded-lg">
                         <p class="text-2xl font-bold text-orange-600">${totalInTransit}</p>
+                        <p class="text-xs text-gray-600">In Transit</p>
                     </div>
-                    <div class="p-3 bg-red-50 rounded-lg text-center">
-                        <p class="text-xs text-red-600 font-medium mb-1">Damaged</p>
+                    <div class="text-center p-3 bg-red-50 rounded-lg">
                         <p class="text-2xl font-bold text-red-600">${totalDamaged}</p>
+                        <p class="text-xs text-gray-600">Damaged</p>
                     </div>
                 </div>
-
                 <div class="space-y-2">
-        `;
-
-        items.forEach(item => {
-            const cylinderType = `${item.kg}kg Commercial`;
-            html += `
-                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <span class="text-sm font-medium text-gray-900">${cylinderType}</span>
-                    <div class="flex items-center gap-4 text-sm">
-                        <span class="text-green-600 font-medium">${item.filled} F</span>
-                        <span class="text-gray-600">${item.empty} E</span>
-                        <span class="text-orange-600">${item.in_transit} T</span>
-                        ${item.damaged > 0 ? `<span class="text-red-600">${item.damaged} D</span>` : ''}
-                    </div>
-                </div>
-            `;
-        });
-
-        html += `
-                </div>
-                <div class="mt-4 w-full bg-gray-200 rounded-full h-3">
-                    <div class="bg-gradient-to-r from-green-500 to-green-600 h-3 rounded-full transition-all" 
-                         style="width: ${filledPercentage}%"></div>
+                    ${items.sort((a, b) => parseFloat(a.kg) - parseFloat(b.kg)).map(item => `
+                        <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                            <span class="font-medium">${item.kg} kg</span>
+                            <div class="flex gap-4 text-sm">
+                                <span class="text-green-600">F: ${item.filled}</span>
+                                <span class="text-gray-600">E: ${item.empty}</span>
+                                <span class="text-orange-600">T: ${item.in_transit}</span>
+                                <span class="text-red-600">D: ${item.damaged}</span>
+                            </div>
+                        </div>
+                    `).join('')}
                 </div>
             </div>
         `;
@@ -272,8 +256,8 @@ function loadInventory() {
     $('#inventoryList').html(html);
 }
 
-function loadTeam() {
-    const users = getUsers().filter(u => u.godown_id === currentGodownId);
+async function loadTeam() {  // ← Made async
+    const users = (await getUsers()).filter(u => u.godown_id === currentGodownId);  // ← Added await
     const managers = users.filter(u => u.role === 'manager');
     const drivers = users.filter(u => u.role === 'driver');
     const loadmen = users.filter(u => u.role === 'loadman');
@@ -423,8 +407,8 @@ function loadTeam() {
     }
 }
 
-function loadTrips() {
-    const trips = getTrips().filter(t => t.godown_id === currentGodownId);
+async function loadTrips() {  // ← Made async
+    const trips = (await getTrips()).filter(t => t.godown_id === currentGodownId);  // ← Added await
     
     if (trips.length === 0) {
         $('#tripsList').html(`
@@ -438,8 +422,9 @@ function loadTrips() {
         return;
     }
 
-    const vehicles = getVehicles();
-    const users = getUsers();
+    // UPDATED: Made data fetching async
+    const vehicles = await getVehicles();
+    const users = await getUsers();
 
     // Sort by date - most recent first
     trips.sort((a, b) => new Date(b.start_time) - new Date(a.start_time));
@@ -455,9 +440,7 @@ function loadTrips() {
         const statusDot = trip.status === 'ongoing' ? '<span class="status-dot active"></span>' : '';
 
         html += `
-            <div class="card hover:shadow-lg transition-all cursor-pointer animate-slide-up" 
-                 style="animation-delay: ${index * 0.05}s"
-                 onclick="window.location.href='trip-details.html?id=${trip.id}'">
+            <div class="card animate-slide-up" style="animation-delay: ${index * 0.05}s">
                 <div class="flex items-start justify-between mb-3">
                     <div>
                         <h3 class="font-semibold text-gray-900">${trip.dc_number}</h3>
@@ -493,10 +476,10 @@ function loadTrips() {
     $('#tripsList').html(html);
 }
 
-function loadDeliveries() {
-    const trips = getTrips().filter(t => t.godown_id === currentGodownId);
+async function loadDeliveries() {  // ← Made async
+    const trips = (await getTrips()).filter(t => t.godown_id === currentGodownId);  // ← Added await
     const tripIds = trips.map(t => t.id);
-    const deliveries = getDeliveries().filter(d => tripIds.includes(d.trip_id));
+    const deliveries = (await getDeliveries()).filter(d => tripIds.includes(d.trip_id));  // ← Added await
     
     if (deliveries.length === 0) {
         $('#deliveriesList').html(`
@@ -510,7 +493,7 @@ function loadDeliveries() {
         return;
     }
 
-    const customers = getCustomers();
+    const customers = await getCustomers();  // ← Added await
 
     // Sort by date - most recent first
     deliveries.sort((a, b) => new Date(b.delivery_date) - new Date(a.delivery_date));
@@ -544,8 +527,8 @@ function loadDeliveries() {
                 <div class="pt-3 border-t border-gray-200">
                     <p class="text-xs text-gray-500 mb-2">Cylinders Delivered</p>
                     <div class="flex flex-wrap gap-2">
-                        ${delivery.cylinders.map(c => `
-                            <span class="badge badge-secondary">${c.quantity}x ${c.type}</span>
+                        ${delivery.delivered_items.map(c => `
+                            <span class="badge badge-secondary">${c.quantity}x ${c.provider} ${c.kg}kg</span>
                         `).join('')}
                     </div>
                 </div>
@@ -572,8 +555,8 @@ function openAddManagerModal() {
     $('#managerModal').removeClass('hidden');
 }
 
-function editManager(managerId) {
-    const users = getUsers();
+async function editManager(managerId) {  // ← Made async
+    const users = await getUsers();  // ← Added await
     const manager = users.find(u => u.id === managerId);
     
     if (!manager) return;
@@ -594,10 +577,10 @@ function closeManagerModal() {
     $('#managerForm')[0].reset();
 }
 
-function saveManager(event) {
+async function saveManager(event) {  // ← Made async
     event.preventDefault();
     
-    const users = getUsers();
+    const users = await getUsers();  // ← Added await
     const managerId = $('#managerId').val();
     const managerData = {
         name: $('#managerName').val().trim(),
@@ -634,7 +617,7 @@ function saveManager(event) {
         }
         
         const newManager = {
-            id: Date.now(),
+            id: users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1,
             ...managerData,
             password: password
         };
@@ -642,35 +625,40 @@ function saveManager(event) {
         showToast('Manager added successfully!', 'success');
     }
     
-    saveUsers(users);
+    // UPDATED: Use Supabase instead of localStorage
+    await saveUsers(users);
     closeManagerModal();
-    loadTeam();
+    await loadTeam();
 }
 
-function deactivateManager(managerId) {
+async function deactivateManager(managerId) {  // ← Made async
     if (!confirm('Are you sure you want to deactivate this manager? They will not be able to login.')) {
         return;
     }
     
-    const users = getUsers();
+    const users = await getUsers();  // ← Added await
     const manager = users.find(u => u.id === managerId);
     
     if (manager) {
         manager.status = 'inactive';
-        saveUsers(users);
+        
+        // UPDATED: Use Supabase instead of localStorage
+        await saveUsers(users);
         showToast('Manager deactivated successfully!', 'success');
-        loadTeam();
+        await loadTeam();
     }
 }
 
-function activateManager(managerId) {
-    const users = getUsers();
+async function activateManager(managerId) {  // ← Made async
+    const users = await getUsers();  // ← Added await
     const manager = users.find(u => u.id === managerId);
     
     if (manager) {
         manager.status = 'active';
-        saveUsers(users);
+        
+        // UPDATED: Use Supabase instead of localStorage
+        await saveUsers(users);
         showToast('Manager activated successfully!', 'success');
-        loadTeam();
+        await loadTeam();
     }
 }

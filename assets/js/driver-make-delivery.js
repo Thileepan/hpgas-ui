@@ -1,4 +1,5 @@
-// Driver Make Delivery JavaScript
+// Driver Make Delivery JavaScript - Optimized for Storage
+// UPDATED: Now using Supabase with async/await instead of localStorage
 
 let currentCustomer = null;
 let deliveredItems = [];
@@ -12,7 +13,7 @@ let emptyItemCounter = 0;
 let returnItemCounter = 0;
 let paymentCounter = 0;
 
-$(document).ready(function() {
+$(document).ready(async function() {  // ← Made async
     const user = checkAuth();
     if (!user || user.role !== 'driver') {
         logout();
@@ -31,17 +32,52 @@ $(document).ready(function() {
         return;
     }
     
-    loadCustomer(customerId);
+    await loadCustomer(customerId);  // ← Added await
     
     // Form submit
-    $('#deliveryForm').submit(function(e) {
+    $('#deliveryForm').submit(async function(e) {  // ← Made async
         e.preventDefault();
-        submitDelivery();
+        await submitDelivery();  // ← Added await
     });
 });
 
-function loadCustomer(customerId) {
-    const customers = getCustomers();
+// ===== IMAGE COMPRESSION UTILITY =====
+function compressImage(dataURL, maxWidth = 800, quality = 0.6) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            
+            // Calculate new dimensions
+            if (width > maxWidth) {
+                height = (height * maxWidth) / width;
+                width = maxWidth;
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // Compress to JPEG with quality setting
+            const compressedDataURL = canvas.toDataURL('image/jpeg', quality);
+            
+            console.log(`Original size: ${(dataURL.length / 1024).toFixed(2)} KB`);
+            console.log(`Compressed size: ${(compressedDataURL.length / 1024).toFixed(2)} KB`);
+            console.log(`Compression ratio: ${((1 - compressedDataURL.length / dataURL.length) * 100).toFixed(1)}%`);
+            
+            resolve(compressedDataURL);
+        };
+        img.src = dataURL;
+    });
+}
+
+async function loadCustomer(customerId) {  // ← Made async
+    // UPDATED: Made data fetching async
+    const customers = await getCustomers();  // ← Added await
     currentCustomer = customers.find(c => c.id === customerId);
     
     if (!currentCustomer) {
@@ -194,6 +230,71 @@ function removeEmptyItem(id) {
     });
 }
 
+// ===== DELIVERY PHOTOS =====
+function captureDeliveryPhoto(index) {
+    currentPhotoIndex = index;
+    $('#deliveryPhotoInput').click();
+}
+
+async function handleDeliveryPhoto(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        const originalDataURL = e.target.result;
+        
+        // Compress the image
+        const compressedDataURL = await compressImage(originalDataURL);
+        
+        // Store compressed photo
+        deliveryPhotos[currentPhotoIndex] = compressedDataURL;
+        
+        // Update UI
+        const photoItems = $('#deliveryPhotosGrid .photo-item');
+        const photoItem = photoItems.eq(currentPhotoIndex);
+        
+        photoItem.html(`
+            <img src="${compressedDataURL}" alt="Delivery Photo" class="w-full h-full object-cover rounded-lg">
+            <button type="button" class="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 shadow-lg hover:bg-red-600 z-10" onclick="removeDeliveryPhoto(${currentPhotoIndex})">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        `).addClass('relative');
+        
+        // Show next photo slot if available
+        if (currentPhotoIndex < 3) {
+            photoItems.eq(currentPhotoIndex + 1).removeClass('hidden');
+        }
+        
+        showToast('Photo captured successfully', 'success');
+    };
+    reader.readAsDataURL(file);
+    
+    // Reset input
+    event.target.value = '';
+}
+
+function removeDeliveryPhoto(index) {
+    deliveryPhotos[index] = null;
+    
+    const photoItems = $('#deliveryPhotosGrid .photo-item');
+    const photoItem = photoItems.eq(index);
+    
+    photoItem.html(`
+        <div class="text-center">
+            <svg class="w-8 h-8 text-gray-400 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+            <p class="text-xs text-gray-500">Tap to Capture</p>
+        </div>
+    `).removeClass('relative').attr('onclick', `captureDeliveryPhoto(${index})`);
+    
+    showToast('Photo removed', 'info');
+}
+
 // ===== RETURN/DAMAGED ITEMS =====
 function addReturnItem() {
     returnItemCounter++;
@@ -213,7 +314,7 @@ function addReturnItem() {
             <div class="grid grid-cols-2 gap-2 mb-3">
                 <div>
                     <label class="block text-xs font-medium text-gray-700 mb-1">Provider *</label>
-                    <select class="return-provider w-full px-2 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500" required>
+                    <select class="return-provider w-full px-2 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500" required>
                         <option value="">Select</option>
                         <option value="HP">HP</option>
                         <option value="Indane">Indane</option>
@@ -222,7 +323,7 @@ function addReturnItem() {
                 
                 <div>
                     <label class="block text-xs font-medium text-gray-700 mb-1">Weight *</label>
-                    <select class="return-kg w-full px-2 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500" required>
+                    <select class="return-kg w-full px-2 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500" required>
                         <option value="">Select</option>
                         <option value="5">5 kg</option>
                         <option value="19">19 kg</option>
@@ -233,20 +334,20 @@ function addReturnItem() {
             </div>
             
             <div>
-                <label class="block text-xs font-medium text-gray-700 mb-2">Cylinder Photo * (Required - Use Camera)</label>
+                <label class="block text-xs font-medium text-gray-700 mb-1">Photo Required *</label>
                 <div class="return-photo-container">
                     <div class="photo-item w-full aspect-video" onclick="captureReturnPhoto(${id})">
                         <div class="text-center">
-                            <svg class="w-12 h-12 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-12 h-12 text-red-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
                             </svg>
                             <p class="text-sm font-medium text-gray-700">Tap to Open Camera</p>
-                            <p class="text-xs text-gray-500 mt-1">Capture photo of damaged cylinder</p>
+                            <p class="text-xs text-gray-500 mt-1">Photo required for damaged/return</p>
                         </div>
                     </div>
                 </div>
-                <input type="file" class="return-photo-input" accept="image/*" capture="environment" style="display: none;" onchange="handleReturnPhoto(event, ${id})">
+                <input type="file" id="returnPhoto-${id}" accept="image/*" capture="environment" style="display: none;" onchange="handleReturnPhoto(event, ${id})">
             </div>
         </div>
     `;
@@ -265,23 +366,26 @@ function removeReturnItem(id) {
 }
 
 function captureReturnPhoto(id) {
-    $(`.return-item[data-id="${id}"] .return-photo-input`).click();
+    console.log('Opening camera for return photo', id);
+    $(`#returnPhoto-${id}`).click();
 }
 
-function handleReturnPhoto(event, id) {
+async function handleReturnPhoto(event, id) {
     const file = event.target.files[0];
     if (!file) return;
     
     const reader = new FileReader();
-    reader.onload = function(e) {
-        const photoData = e.target.result;
+    reader.onload = async function(e) {
+        const originalData = e.target.result;
         
-        // Update photo container
+        // Compress the image
+        const compressedData = await compressImage(originalData, 600, 0.5);
+        
         const container = $(`.return-item[data-id="${id}"] .return-photo-container`);
         container.html(`
             <div class="relative">
-                <img src="${photoData}" class="w-full h-48 object-cover rounded-lg">
-                <button type="button" onclick="removeReturnPhoto(${id})" class="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600">
+                <img src="${compressedData}" class="w-full h-48 object-cover rounded-lg">
+                <button type="button" class="remove-return-photo-btn absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600" data-id="${id}">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -289,8 +393,13 @@ function handleReturnPhoto(event, id) {
             </div>
         `);
         
-        // Store photo data
-        $(`.return-item[data-id="${id}"]`).data('photo', photoData);
+        // Attach remove handler
+        container.find('.remove-return-photo-btn').on('click', function() {
+            removeReturnPhoto($(this).data('id'));
+        });
+        
+        // Store compressed photo data
+        $(`.return-item[data-id="${id}"]`).data('photo', compressedData);
     };
     reader.readAsDataURL(file);
 }
@@ -298,70 +407,26 @@ function handleReturnPhoto(event, id) {
 function removeReturnPhoto(id) {
     const container = $(`.return-item[data-id="${id}"] .return-photo-container`);
     container.html(`
-        <div class="photo-item w-full aspect-video" onclick="captureReturnPhoto(${id})">
+        <div class="photo-item w-full aspect-video cursor-pointer">
             <div class="text-center">
-                <svg class="w-12 h-12 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-12 h-12 text-red-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
                 </svg>
-                <p class="text-sm text-gray-500">Tap to capture photo</p>
+                <p class="text-sm font-medium text-gray-700">Tap to Open Camera</p>
+                <p class="text-xs text-gray-500 mt-1">Photo required for damaged/return</p>
             </div>
         </div>
     `);
+    
+    // Attach click handler
+    container.find('.photo-item').on('click', function() {
+        captureReturnPhoto(id);
+    });
+    
     $(`.return-item[data-id="${id}"]`).removeData('photo');
 }
 
-// ===== DELIVERY PHOTOS =====
-function captureDeliveryPhoto(index) {
-    currentPhotoIndex = index;
-    $('#deliveryPhotoInput').click();
-}
-
-function handleDeliveryPhoto(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const photoData = e.target.result;
-        deliveryPhotos[currentPhotoIndex] = photoData;
-        
-        // Update photo grid
-        const photoItems = $('#deliveryPhotosGrid .photo-item');
-        $(photoItems[currentPhotoIndex]).html(`
-            <img src="${photoData}" class="w-full h-full object-cover">
-            <button type="button" onclick="removeDeliveryPhoto(${currentPhotoIndex})" class="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
-        `).addClass('relative');
-        
-        // Show next photo slot if available
-        if (currentPhotoIndex < 3) {
-            $(photoItems[currentPhotoIndex + 1]).removeClass('hidden');
-        }
-    };
-    reader.readAsDataURL(file);
-    
-    // Reset input
-    event.target.value = '';
-}
-
-function removeDeliveryPhoto(index) {
-    deliveryPhotos[index] = null;
-    
-    const photoItems = $('#deliveryPhotosGrid .photo-item');
-    $(photoItems[index]).html(`
-        <div class="text-center">
-            <svg class="w-8 h-8 text-gray-400 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
-            </svg>
-            <p class="text-xs text-gray-500">Add Photo</p>
-        </div>
-    `).removeClass('relative');
-}
 
 // ===== PAYMENTS =====
 function addPayment() {
@@ -369,7 +434,7 @@ function addPayment() {
     const id = paymentCounter;
     
     const html = `
-        <div class="payment-item p-4 bg-green-50 rounded-lg border border-green-200" data-id="${id}">
+        <div class="payment-item p-4 bg-gray-50 rounded-lg border border-gray-200" data-id="${id}">
             <div class="flex items-center justify-between mb-3">
                 <h4 class="font-semibold text-gray-900">Payment #${paymentCounter}</h4>
                 <button type="button" class="text-red-500 hover:text-red-600" onclick="removePayment(${id})">
@@ -379,48 +444,50 @@ function addPayment() {
                 </button>
             </div>
             
-            <div class="grid grid-cols-2 gap-3 mb-3">
+            <div class="space-y-3">
                 <div>
                     <label class="block text-xs font-medium text-gray-700 mb-1">Payment Mode *</label>
-                    <select class="payment-mode w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500" onchange="togglePaymentReference(${id})" required>
-                        <option value="">Select</option>
+                    <select class="payment-mode w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500" onchange="handlePaymentModeChange(${id})" required>
+                        <option value="">Select Mode</option>
                         <option value="cash">Cash</option>
                         <option value="upi">UPI</option>
                         <option value="cheque">Cheque</option>
+                        <option value="credit">Credit</option>
                     </select>
                 </div>
                 
                 <div>
-                    <label class="block text-xs font-medium text-gray-700 mb-1">Amount (₹) *</label>
-                    <input type="number" class="payment-amount w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500" min="0" placeholder="0" onchange="updateTotalPayment()" required>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Amount *</label>
+                    <input type="number" class="payment-amount w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500" min="0" step="0.01" placeholder="0.00" onchange="updateTotalPayment()" required>
                 </div>
-            </div>
-            
-            <div class="payment-reference-field hidden">
-                <label class="block text-xs font-medium text-gray-700 mb-1">Reference / Transaction ID *</label>
-                <input type="text" class="payment-reference w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 mb-3" placeholder="Enter reference number">
                 
-                <label class="block text-xs font-medium text-gray-700 mb-2">Payment Proof Photo * (Use Camera)</label>
-                <div class="payment-photo-container">
-                    <div class="photo-item w-full aspect-video" onclick="capturePaymentPhoto(${id})">
-                        <div class="text-center">
-                            <svg class="w-12 h-12 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            </svg>
-                            <p class="text-sm font-medium text-gray-700">Tap to Open Camera</p>
-                            <p class="text-xs text-gray-500 mt-1">Capture screenshot/receipt</p>
+                <div class="payment-reference-container hidden">
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Reference/Transaction ID *</label>
+                    <input type="text" class="payment-reference w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500" placeholder="Enter reference number">
+                </div>
+                
+                <div class="payment-photo-section hidden">
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Payment Proof (Screenshot/Photo) *</label>
+                    <div class="payment-photo-container">
+                        <div class="photo-item w-full aspect-video" onclick="capturePaymentPhoto(${id})">
+                            <div class="text-center">
+                                <svg class="w-12 h-12 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                <p class="text-sm font-medium text-gray-700">Tap to Open Camera</p>
+                                <p class="text-xs text-gray-500 mt-1">Capture screenshot/receipt</p>
+                            </div>
                         </div>
                     </div>
+                    <input type="file" id="paymentPhoto-${id}" accept="image/*" capture="environment" style="display: none;" onchange="handlePaymentPhoto(event, ${id})">
                 </div>
-                <input type="file" class="payment-photo-input" accept="image/*" capture="environment" style="display: none;" onchange="handlePaymentPhoto(event, ${id})">
             </div>
         </div>
     `;
     
     $('#emptyPaymentState').hide();
     $('#paymentsContainer').append(html);
-    updateTotalPayment();
 }
 
 function removePayment(id) {
@@ -434,37 +501,43 @@ function removePayment(id) {
     });
 }
 
-function togglePaymentReference(id) {
+function handlePaymentModeChange(id) {
     const mode = $(`.payment-item[data-id="${id}"] .payment-mode`).val();
-    const refField = $(`.payment-item[data-id="${id}"] .payment-reference-field`);
+    const $item = $(`.payment-item[data-id="${id}"]`);
     
     if (mode === 'upi' || mode === 'cheque') {
-        refField.removeClass('hidden');
-        refField.find('.payment-reference').prop('required', true);
+        $item.find('.payment-reference-container').removeClass('hidden');
+        $item.find('.payment-reference').prop('required', true);
+        $item.find('.payment-photo-section').removeClass('hidden');
     } else {
-        refField.addClass('hidden');
-        refField.find('.payment-reference').prop('required', false);
+        $item.find('.payment-reference-container').addClass('hidden');
+        $item.find('.payment-reference').prop('required', false);
+        $item.find('.payment-photo-section').addClass('hidden');
+        $item.removeData('photo');
     }
 }
 
 function capturePaymentPhoto(id) {
-    $(`.payment-item[data-id="${id}"] .payment-photo-input`).click();
+    console.log('Opening camera for payment photo', id);
+    $(`#paymentPhoto-${id}`).click();
 }
 
-function handlePaymentPhoto(event, id) {
+async function handlePaymentPhoto(event, id) {
     const file = event.target.files[0];
     if (!file) return;
     
     const reader = new FileReader();
-    reader.onload = function(e) {
-        const photoData = e.target.result;
+    reader.onload = async function(e) {
+        const originalData = e.target.result;
         
-        // Update photo container
+        // Compress the image
+        const compressedData = await compressImage(originalData, 600, 0.5);
+        
         const container = $(`.payment-item[data-id="${id}"] .payment-photo-container`);
         container.html(`
             <div class="relative">
-                <img src="${photoData}" class="w-full h-48 object-cover rounded-lg">
-                <button type="button" onclick="removePaymentPhoto(${id})" class="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600">
+                <img src="${compressedData}" class="w-full h-48 object-cover rounded-lg">
+                <button type="button" class="remove-payment-photo-btn absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600" data-id="${id}">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -472,8 +545,13 @@ function handlePaymentPhoto(event, id) {
             </div>
         `);
         
-        // Store photo data
-        $(`.payment-item[data-id="${id}"]`).data('photo', photoData);
+        // Attach remove handler
+        container.find('.remove-payment-photo-btn').on('click', function() {
+            removePaymentPhoto($(this).data('id'));
+        });
+        
+        // Store compressed photo data
+        $(`.payment-item[data-id="${id}"]`).data('photo', compressedData);
     };
     reader.readAsDataURL(file);
 }
@@ -481,7 +559,7 @@ function handlePaymentPhoto(event, id) {
 function removePaymentPhoto(id) {
     const container = $(`.payment-item[data-id="${id}"] .payment-photo-container`);
     container.html(`
-        <div class="photo-item w-full aspect-video" onclick="capturePaymentPhoto(${id})">
+        <div class="photo-item w-full aspect-video cursor-pointer">
             <div class="text-center">
                 <svg class="w-12 h-12 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
@@ -492,6 +570,12 @@ function removePaymentPhoto(id) {
             </div>
         </div>
     `);
+    
+    // Attach click handler
+    container.find('.photo-item').on('click', function() {
+        capturePaymentPhoto(id);
+    });
+    
     $(`.payment-item[data-id="${id}"]`).removeData('photo');
 }
 
@@ -510,7 +594,7 @@ function updateTotalPayment() {
 }
 
 // ===== SUBMIT DELIVERY =====
-function submitDelivery() {
+async function submitDelivery() {  // ← Made async
     // Validate delivered items
     deliveredItems = [];
     let deliveredValid = true;
@@ -535,6 +619,85 @@ function submitDelivery() {
     
     if (!deliveredValid) {
         showToast('Please fill all delivered cylinder fields', 'error');
+        return;
+    }
+    
+    // ===== VALIDATE AGAINST TRIP LOAD =====
+    const user = getCurrentUser();
+    const trips = await getTrips();
+    const activeTrip = trips
+        .filter(t => t.driver_id === user.id && t.status === 'ongoing')
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+    
+    if (!activeTrip) {
+        showToast('No active trip found', 'error');
+        return;
+    }
+    
+    // Get all deliveries already made in this trip
+    const deliveries = await getDeliveries();
+    const tripDeliveries = deliveries.filter(d => d.trip_id === activeTrip.id);
+    
+    // Calculate total delivered so far per cylinder type
+    const alreadyDelivered = {};
+    tripDeliveries.forEach(delivery => {
+        delivery.delivered_items.forEach(item => {
+            const key = `${item.provider}_${item.kg}`;
+            if (!alreadyDelivered[key]) {
+                alreadyDelivered[key] = 0;
+            }
+            alreadyDelivered[key] += item.quantity;
+        });
+    });
+    
+    // Check if current delivery exceeds trip load
+    let exceedsLoad = false;
+    let exceedDetails = [];
+    
+    deliveredItems.forEach(item => {
+        const key = `${item.provider}_${item.kg}`;
+        
+        // Find matching load item
+        const loadItem = activeTrip.load_details.find(
+            l => l.provider === item.provider && 
+                 parseFloat(l.kg) === parseFloat(item.kg) && 
+                 l.type === 'filled'
+        );
+        
+        if (!loadItem) {
+            exceedsLoad = true;
+            exceedDetails.push(
+                `${item.provider} ${item.kg}kg: Not loaded on this trip`
+            );
+            return;
+        }
+        
+        // Calculate available for delivery
+        const loaded = loadItem.quantity;
+        const previouslyDelivered = alreadyDelivered[key] || 0;
+        const available = loaded - previouslyDelivered;
+        
+        if (item.quantity > available) {
+            exceedsLoad = true;
+            exceedDetails.push(
+                `${item.provider} ${item.kg}kg: Trying to deliver ${item.quantity}, but only ${available} available (Loaded: ${loaded}, Already delivered: ${previouslyDelivered})`
+            );
+        }
+    });
+    
+    if (exceedsLoad) {
+        showToast('Cannot deliver more than loaded on vehicle!', 'error');
+        
+        // Show detailed error
+        let errorMsg = '<div class="text-left"><p class="font-semibold mb-2 text-red-600">Delivery Exceeds Trip Load:</p><ul class="list-disc pl-5 space-y-1">';
+        exceedDetails.forEach(detail => {
+            errorMsg += `<li class="text-sm">${detail}</li>`;
+        });
+        errorMsg += '</ul></div>';
+        
+        $('#exceedsLoadDetails').html(errorMsg);
+        $('#exceedsLoadModal').removeClass('hidden');
+        
         return;
     }
     
@@ -644,21 +807,28 @@ function submitDelivery() {
     }
 }
 
-function completeDelivery(latitude, longitude) {
+async function completeDelivery(latitude, longitude) {  // ← Made async
     const user = getCurrentUser();
-    const trips = getTrips();
-    const activeTrip = trips.find(t => t.driver_id === user.id && t.status === 'ongoing');
+    // UPDATED: Made all data fetching async
+    const trips = await getTrips();  // ← Added await
+    const activeTrip = trips
+        .filter(t => t.driver_id === user.id && t.status === 'ongoing')
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
     
     if (!activeTrip) {
         showToast('No active trip found', 'error');
         return;
     }
     
-    // Get filtered photos (non-null)
+    // Get filtered photos (non-null) - already compressed
     const validPhotos = deliveryPhotos.filter(p => p != null);
     
+    console.log('Saving delivery with compressed photos');
+    console.log('Number of photos:', validPhotos.length);
+    console.log('Total estimated size:', (JSON.stringify(validPhotos).length / 1024).toFixed(2), 'KB');
+    
     // Create delivery object
-    const deliveries = getDeliveries();
+    const deliveries = await getDeliveries();  // ← Added await
     const newId = deliveries.length > 0 ? Math.max(...deliveries.map(d => d.id)) + 1 : 1;
     
     const delivery = {
@@ -671,19 +841,114 @@ function completeDelivery(latitude, longitude) {
         empty_collected: emptyItems,
         return_collected: returnItems,
         payments: payments,
-        photos: validPhotos,
+        photos: validPhotos, // Compressed photos
         notes: $('#deliveryNotes').val(),
         latitude: latitude,
         longitude: longitude,
         created_at: new Date().toISOString()
     };
     
-    deliveries.push(delivery);
-    saveDeliveries(deliveries);
-    
-    showToast('Delivery completed successfully!', 'success');
-    
-    setTimeout(() => {
-        window.location.href = 'driver-trip.html';
-    }, 1500);
+    try {
+        deliveries.push(delivery);
+        await saveDeliveries(deliveries);  // ← Added await
+        
+        // ===== UPDATE INVENTORY =====
+        await updateInventoryAfterDelivery(activeTrip.godown_id, deliveredItems, emptyItems);
+        
+        console.log('Delivery saved successfully');
+        console.log('Total deliveries in storage:', deliveries.length);
+        
+        showToast('Delivery completed successfully!', 'success');
+        
+        setTimeout(() => {
+            window.location.href = 'driver-trip.html';
+        }, 1500);
+    } catch (error) {
+        console.error('Error saving delivery:', error);
+        if (error.name === 'QuotaExceededError') {
+            showToast('Storage limit exceeded. Please contact support.', 'error');
+            // Optionally: try to save without photos
+            console.log('Attempting to save without photos...');
+            delivery.photos = [];
+            delivery.return_collected = delivery.return_collected.map(r => ({...r, photo: null}));
+            delivery.payments = delivery.payments.map(p => ({...p, photo: null}));
+            try {
+                deliveries.push(delivery);
+                await saveDeliveries(deliveries);  // ← Added await
+                
+                // Still update inventory even without photos
+                await updateInventoryAfterDelivery(activeTrip.godown_id, deliveredItems, emptyItems);
+                
+                showToast('Delivery saved without photos due to storage limits', 'warning');
+                setTimeout(() => {
+                    window.location.href = 'driver-trip.html';
+                }, 2000);
+            } catch (e2) {
+                showToast('Unable to save delivery. Please try again.', 'error');
+            }
+        } else {
+            showToast('Error saving delivery. Please try again.', 'error');
+        }
+    }
+}
+
+// ===== UPDATE INVENTORY AFTER DELIVERY =====
+async function updateInventoryAfterDelivery(godownId, deliveredItems, emptyItems) {
+    try {
+        console.log('Updating inventory after delivery...');
+        
+        const inventory = await getInventory();  // ← Get current inventory
+        
+        // Process delivered items - cylinders now with customer
+        // NOTE: Filled stock was already reduced when trip started
+        // Here we just track that cylinders are now with customer (keep in_transit)
+        deliveredItems.forEach(item => {
+            const inventoryItem = inventory.find(
+                inv => inv.godown_id === godownId && 
+                       inv.provider === item.provider && 
+                       inv.kg === parseFloat(item.kg)
+            );
+            
+            if (inventoryItem) {
+                // Cylinders already in in_transit from trip start
+                // They stay in_transit until customer returns them as empty
+                console.log(`Delivered ${item.provider} ${item.kg}kg: ${item.quantity} (staying in_transit)`);
+            } else {
+                console.warn(`Inventory item not found: ${item.provider} ${item.kg}kg`);
+            }
+        });
+        
+        // Process empty collected items (reduce in_transit, increase empty stock)
+        emptyItems.forEach(item => {
+            const inventoryItem = inventory.find(
+                inv => inv.godown_id === godownId && 
+                       inv.provider === item.provider && 
+                       inv.kg === parseFloat(item.kg)
+            );
+            
+            if (inventoryItem) {
+                // Reduce in_transit (customer returned empties)
+                inventoryItem.in_transit = Math.max(0, inventoryItem.in_transit - item.quantity);
+                // Increase empty stock (empties back in godown)
+                inventoryItem.empty += item.quantity;
+                console.log(`Collected ${item.provider} ${item.kg}kg: -${item.quantity} in_transit, +${item.quantity} empty`);
+            } else {
+                console.warn(`Inventory item not found: ${item.provider} ${item.kg}kg`);
+            }
+        });
+        
+        // Save updated inventory
+        await saveInventory(inventory);
+        console.log('Inventory updated successfully');
+        
+    } catch (error) {
+        console.error('Error updating inventory:', error);
+        // Don't fail the delivery if inventory update fails
+        // The manager can manually adjust inventory later
+    }
+}
+
+// Close exceeds load modal
+function closeExceedsLoadModal() {
+    $('#exceedsLoadModal').addClass('hidden');
 }

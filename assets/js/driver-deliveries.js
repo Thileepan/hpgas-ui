@@ -1,21 +1,28 @@
 // Driver Deliveries - Nearby Customers JavaScript
+// UPDATED: Now using Supabase with async/await instead of localStorage
 
 let currentLocation = null;
 let allCustomers = [];
 let filteredCustomers = [];
 
-$(document).ready(function() {
+$(document).ready(async function() {  // ← Made async
     const user = checkAuth();
     if (!user || user.role !== 'driver') {
         logout();
         return;
     }
 
-    // Request location
-    requestLocation();
+    // Show loading state
+    $('#loadingState').removeClass('hidden');
+    $('#customersList').addClass('hidden');
     
-    // Load customers
-    allCustomers = getCustomers();
+    // Load customers FIRST before requesting location
+    // UPDATED: Made data fetching async
+    allCustomers = await getCustomers();  // ← Added await
+    console.log('Customers loaded:', allCustomers.length);
+    
+    // Now request location (which will trigger filterCustomers when ready)
+    requestLocation();
     
     // Search functionality
     $('#searchCustomer').on('input', function() {
@@ -31,13 +38,14 @@ $(document).ready(function() {
 });
 
 function requestLocation() {
-    $('#loadingState').removeClass('hidden');
-    $('#customersList').addClass('hidden');
+    // Loading state is already shown from document ready
     
     if (!navigator.geolocation) {
         $('#locationPermission').removeClass('hidden');
         $('#loadingState').addClass('hidden');
         showToast('Geolocation is not supported by your browser', 'error');
+        // Show customers anyway even without location
+        filterCustomers();
         return;
     }
     
@@ -56,6 +64,8 @@ function requestLocation() {
             $('#currentLocation').text(`${currentLocation.lat.toFixed(4)}, ${currentLocation.lng.toFixed(4)}`);
             
             $('#locationPermission').addClass('hidden');
+            
+            // Now filter and display customers with location data
             filterCustomers();
         },
         function(error) {
@@ -63,6 +73,9 @@ function requestLocation() {
             $('#locationPermission').removeClass('hidden');
             $('#loadingState').addClass('hidden');
             showToast('Unable to get your location', 'error');
+            
+            // Show customers anyway even without location
+            filterCustomers();
         },
         {
             enableHighAccuracy: true,

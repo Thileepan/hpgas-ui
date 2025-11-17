@@ -267,6 +267,54 @@
         </div>
     </div>
 
+    <!-- Insufficient Stock Modal -->
+    <!-- Add this modal BEFORE the closing </body> tag in create-trip.html -->
+
+    <div id="insufficientStockModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 animate-slide-up">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900">Insufficient Stock</h3>
+                </div>
+                <button onclick="closeInsufficientStockModal()" class="p-2 hover:bg-gray-100 rounded-lg">
+                    <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div id="insufficientStockDetails" class="mb-6 p-4 bg-red-50 rounded-lg border border-red-200">
+                <!-- Error details will be inserted here by JavaScript -->
+            </div>
+            
+            <div class="flex flex-col gap-3">
+                <button onclick="window.location.href='inventory.html'" class="btn btn-primary">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    </svg>
+                    Check Inventory
+                </button>
+                <button onclick="closeInsufficientStockModal()" class="btn btn-secondary">
+                    Close
+                </button>
+            </div>
+            
+            <div class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <p class="text-sm text-blue-800">
+                    <strong>Tip:</strong> You can adjust stock levels in the Inventory section or reduce the quantity in your trip load.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="assets/js/mock-data.js"></script>
     <script src="assets/js/auth.js"></script>

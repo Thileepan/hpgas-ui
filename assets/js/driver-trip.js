@@ -1,8 +1,9 @@
 // Driver Trip Management JavaScript
+// UPDATED: Now using Supabase with async/await instead of localStorage
 
 let currentTrip = null;
 
-$(document).ready(function() {
+$(document).ready(async function() {  // ← Made async
     const user = checkAuth();
     if (!user || user.role !== 'driver') {
         logout();
@@ -14,23 +15,44 @@ $(document).ready(function() {
     const initials = user.name.split(' ').map(n => n[0]).join('');
     $('#userInitials').text(initials);
 
-    loadActiveTrip();
+    await loadActiveTrip();  // ← Added await
+    
+    // Auto-refresh every 10 seconds to show new deliveries
+    setInterval(async function() {  // ← Made async
+        if (currentTrip) {
+            console.log('Auto-refreshing deliveries for trip:', currentTrip.dc_number);
+            await loadTripDeliveries(currentTrip);  // ← Added await
+            await loadCurrentLoad(currentTrip);  // ← Added await - Also refresh load to show delivered count
+        }
+    }, 10000); // Changed to 10 seconds for faster updates
 });
 
-function loadActiveTrip() {
+async function loadActiveTrip() {  // ← Made async
     const user = getCurrentUser();
-    const trips = getTrips();
+    // UPDATED: Made data fetching async
+    const trips = await getTrips();  // ← Added await
     
-    // Find active trip for this driver
-    const activeTrip = trips.find(t => t.driver_id === user.id && t.status === 'ongoing');
+    // Find active trip for this driver - GET THE LATEST ONE BY CREATED_AT
+    const activeTrips = trips
+        .filter(t => t.driver_id === user.id && t.status === 'ongoing')
+        .sort((a, b) => {
+            // Sort by created_at descending (newest first)
+            const dateA = new Date(a.created_at);
+            const dateB = new Date(b.created_at);
+            return dateB - dateA;
+        });
     
-    if (!activeTrip) {
+    if (activeTrips.length === 0) {
         $('#noTripSection').removeClass('hidden');
         $('#activeTripContent').addClass('hidden');
         return;
     }
     
+    const activeTrip = activeTrips[0]; // Get the most recently created trip
     currentTrip = activeTrip;
+    
+    console.log('Active trip loaded:', activeTrip.dc_number, 'Created at:', activeTrip.created_at);
+    
     $('#noTripSection').addClass('hidden');
     $('#activeTripContent').removeClass('hidden');
     
@@ -41,16 +63,16 @@ function loadActiveTrip() {
     loadTripStatus(activeTrip);
     
     // Load trip info
-    loadTripInfo(activeTrip);
+    await loadTripInfo(activeTrip);  // ← Added await
     
     // Load vehicle and crew
-    loadVehicleCrew(activeTrip);
+    await loadVehicleCrew(activeTrip);  // ← Added await
     
     // Load current load
-    loadCurrentLoad(activeTrip);
+    await loadCurrentLoad(activeTrip);  // ← Added await
     
     // Load deliveries
-    loadTripDeliveries(activeTrip);
+    await loadTripDeliveries(activeTrip);  // ← Added await
 }
 
 function loadTripStatus(trip) {
@@ -62,6 +84,11 @@ function loadTripStatus(trip) {
     
     const duration = diffHrs > 0 ? `${diffHrs}h ${diffMins}m` : `${diffMins}m`;
     
+    // Check if trip was created in the last 30 minutes
+    const createdAt = new Date(trip.created_at);
+    const timeSinceCreation = Math.floor((now - createdAt) / 1000 / 60); // minutes
+    const isNew = timeSinceCreation <= 30;
+    
     const html = `
         <div class="p-4 bg-gradient-to-br from-green-500 to-green-600 rounded-xl text-white">
             <div class="flex items-center justify-between mb-3">
@@ -69,31 +96,47 @@ function loadTripStatus(trip) {
                     <div class="w-3 h-3 bg-white rounded-full animate-pulse"></div>
                     <span class="font-semibold">Trip in Progress</span>
                 </div>
-                <span class="text-sm bg-white/20 px-3 py-1 rounded-full">${duration}</span>
+                <div class="flex items-center gap-2">
+                    <span class="text-sm bg-white/20 px-3 py-1 rounded-full">${duration}</span>
+                    ${isNew ? '<span class="px-2 py-1 bg-yellow-400 text-yellow-900 text-xs font-bold rounded-full animate-pulse">NEW</span>' : ''}
+                </div>
             </div>
-            <div class="flex items-center justify-between">
+            <div class="grid grid-cols-3 gap-2">
                 <div>
                     <p class="text-xs text-white/80">Started at</p>
-                    <p class="font-semibold">${startTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</p>
+                    <p class="font-semibold text-sm">${startTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</p>
                 </div>
                 <div>
                     <p class="text-xs text-white/80">Start KM</p>
-                    <p class="font-semibold">${trip.start_km} km</p>
+                    <p class="font-semibold text-sm">${trip.start_km} km</p>
                 </div>
                 <div>
                     <p class="text-xs text-white/80">Type</p>
-                    <p class="font-semibold">${trip.trip_type === 'delivery' ? 'Delivery' : 'Refill'}</p>
+                    <p class="font-semibold text-sm">${trip.trip_type === 'delivery' ? 'Delivery' : 'Refill'}</p>
                 </div>
             </div>
+            ${isNew ? `
+            <div class="flex items-center gap-2 text-xs bg-yellow-400/20 rounded-lg p-2 mt-3">
+                <svg class="w-4 h-4 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span class="text-yellow-100">New trip created ${timeSinceCreation} minute${timeSinceCreation !== 1 ? 's' : ''} ago by manager</span>
+            </div>
+            ` : ''}
         </div>
     `;
     
     $('#tripStatusCard').html(html);
 }
 
-function loadTripInfo(trip) {
-    const godowns = getGodowns();
+async function loadTripInfo(trip) {  // ← Made async
+    // UPDATED: Made data fetching async
+    const godowns = await getGodowns();  // ← Added await
     const godown = godowns.find(g => g.id === trip.godown_id);
+    
+    const startDate = new Date(trip.start_time);
+    const dateStr = startDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+    const timeStr = startDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
     
     let html = `
         <div class="flex items-center justify-between py-2 border-b border-gray-100">
@@ -108,14 +151,19 @@ function loadTripInfo(trip) {
             <span class="text-sm text-gray-600">Godown</span>
             <span class="font-semibold text-gray-900">${godown ? godown.name : 'N/A'}</span>
         </div>
+        <div class="flex items-center justify-between py-2 border-b border-gray-100">
+            <span class="text-sm text-gray-600">Start Date</span>
+            <span class="font-semibold text-gray-900">${dateStr}</span>
+        </div>
         <div class="flex items-center justify-between py-2">
             <span class="text-sm text-gray-600">Start Time</span>
-            <span class="font-semibold text-gray-900">${new Date(trip.start_time).toLocaleString('en-IN')}</span>
+            <span class="font-semibold text-gray-900">${timeStr}</span>
         </div>
     `;
     
+    // Show filling station for refill trips
     if (trip.trip_type === 'refill' && trip.filling_station_id) {
-        const stations = getFillingStations();
+        const stations = await getFillingStations();  // ← Added await
         const station = stations.find(s => s.id === trip.filling_station_id);
         html += `
             <div class="flex items-center justify-between py-2 border-t border-gray-100 mt-2">
@@ -128,12 +176,13 @@ function loadTripInfo(trip) {
     $('#tripInfo').html(html);
 }
 
-function loadVehicleCrew(trip) {
-    const vehicles = getVehicles();
+async function loadVehicleCrew(trip) {  // ← Made async
+    // UPDATED: Made all data fetching async
+    const vehicles = await getVehicles();  // ← Added await
     const vehicle = vehicles.find(v => v.id === trip.vehicle_id);
     
-    const users = getUsers();
-    const loadmen = getLoadmen();
+    const users = await getUsers();  // ← Added await
+    const loadmen = await getLoadmen();  // ← Added await
     
     const driver = users.find(u => u.id === trip.driver_id);
     const loadman1 = loadmen.find(l => l.id === trip.loadman1_id);
@@ -189,7 +238,8 @@ function loadVehicleCrew(trip) {
     $('#vehicleCrew').html(html);
 }
 
-function loadCurrentLoad(trip) {
+async function loadCurrentLoad(trip) {  // ← Made async
+    // Calculate totals from load_details
     let totalFilled = 0;
     let totalEmpty = 0;
     
@@ -201,8 +251,9 @@ function loadCurrentLoad(trip) {
         }
     });
     
-    // Calculate delivered
-    const deliveries = getDeliveries().filter(d => d.trip_id === trip.id);
+    // Calculate delivered from actual deliveries
+    // UPDATED: Made data fetching async
+    const deliveries = (await getDeliveries()).filter(d => d.trip_id === trip.id);  // ← Added await
     let delivered = 0;
     deliveries.forEach(d => {
         d.delivered_items.forEach(item => {
@@ -211,11 +262,12 @@ function loadCurrentLoad(trip) {
     });
     
     const remaining = totalFilled - delivered;
+    const totalLoaded = totalFilled + totalEmpty;
     
     const summaryHtml = `
         <div class="text-center">
             <p class="text-xs text-gray-500 mb-1">Total Loaded</p>
-            <p class="text-2xl font-bold text-gray-900">${totalFilled + totalEmpty}</p>
+            <p class="text-2xl font-bold text-gray-900">${totalLoaded}</p>
         </div>
         <div class="text-center">
             <p class="text-xs text-gray-500 mb-1">Delivered</p>
@@ -225,14 +277,17 @@ function loadCurrentLoad(trip) {
     
     $('#loadSummary').html(summaryHtml);
     
-    // Detailed load
+    // Detailed load - show load_details from trip
     let detailsHtml = '<div class="space-y-2">';
     trip.load_details.forEach(item => {
+        const typeLabel = item.type === 'filled' ? 'Filled' : 'Empty';
+        const typeColor = item.type === 'filled' ? 'text-green-600' : 'text-gray-600';
+        
         detailsHtml += `
             <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div>
                     <p class="font-semibold text-gray-900">${item.provider} ${item.kg}kg</p>
-                    <p class="text-xs text-gray-500">${item.type === 'filled' ? 'Filled' : 'Empty'}</p>
+                    <p class="text-xs ${typeColor}">${typeLabel}</p>
                 </div>
                 <span class="text-lg font-bold text-gray-900">${item.quantity}</span>
             </div>
@@ -251,9 +306,12 @@ function toggleLoadDetails() {
     $('#loadToggleText').text(isVisible ? 'Hide Details' : 'Show Details');
 }
 
-function loadTripDeliveries(trip) {
-    const deliveries = getDeliveries().filter(d => d.trip_id === trip.id);
-    const customers = getCustomers();
+async function loadTripDeliveries(trip) {  // ← Made async
+    // UPDATED: Made all data fetching async
+    const deliveries = (await getDeliveries()).filter(d => d.trip_id === trip.id);  // ← Added await
+    const customers = await getCustomers();  // ← Added await
+    
+    console.log('Loading deliveries for trip', trip.id, '- Found:', deliveries.length);
     
     $('#deliveryCount').text(deliveries.length);
     
@@ -263,33 +321,60 @@ function loadTripDeliveries(trip) {
                 <svg class="w-16 h-16 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
-                <p class="text-gray-500 text-sm">No deliveries made yet</p>
+                <p class="text-gray-500 text-sm font-medium">No deliveries made yet</p>
+                <p class="text-xs text-gray-400 mt-1">Start making deliveries to track them here</p>
+                <button onclick="loadActiveTrip()" class="mt-3 px-4 py-2 bg-orange-500 text-white rounded-lg text-sm hover:bg-orange-600">
+                    <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    Refresh Now
+                </button>
             </div>
         `);
+        $('#endTripSection').addClass('hidden');
         return;
     }
+    
+    // Sort deliveries by created_at (newest first)
+    deliveries.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     
     let html = '';
     deliveries.forEach((delivery, index) => {
         const customer = customers.find(c => c.id === delivery.customer_id);
-        const time = new Date(delivery.delivery_time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+        const deliveryDateTime = new Date(delivery.created_at);
+        const time = deliveryDateTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
         
         let totalQty = 0;
         delivery.delivered_items.forEach(item => totalQty += item.quantity);
         
         let totalPayment = 0;
-        if (delivery.payments) {
+        if (delivery.payments && delivery.payments.length > 0) {
             delivery.payments.forEach(p => totalPayment += p.amount);
         }
         
+        // Check if delivery is new (created in last 30 seconds)
+        const now = new Date();
+        const timeSinceDelivery = Math.floor((now - deliveryDateTime) / 1000);
+        const isNewDelivery = timeSinceDelivery <= 30;
+        
         html += `
-            <div class="p-4 bg-gray-50 rounded-lg" style="animation: slideUp 0.5s ease-out ${index * 0.1}s both">
+            <div class="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer ${isNewDelivery ? 'ring-2 ring-green-500' : ''}" 
+                 style="animation: slideUp 0.5s ease-out ${index * 0.1}s both"
+                 onclick="viewDeliveryDetail(${delivery.id})">
                 <div class="flex items-center justify-between mb-2">
-                    <h4 class="font-semibold text-gray-900">${customer ? customer.name : 'Unknown'}</h4>
+                    <div class="flex items-center gap-2">
+                        <h4 class="font-semibold text-gray-900">${customer ? customer.name : 'Unknown Customer'}</h4>
+                        ${isNewDelivery ? '<span class="px-2 py-1 bg-green-500 text-white text-xs font-bold rounded-full">NEW</span>' : ''}
+                    </div>
                     <span class="text-xs text-gray-500">${time}</span>
                 </div>
                 <div class="flex items-center justify-between text-sm">
-                    <span class="text-gray-600">${totalQty} cylinders delivered</span>
+                    <div class="flex items-center gap-1 text-gray-600">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                        </svg>
+                        <span>${totalQty} cylinders</span>
+                    </div>
                     <span class="font-semibold text-green-600">₹${totalPayment.toLocaleString('en-IN')}</span>
                 </div>
             </div>
@@ -299,14 +384,50 @@ function loadTripDeliveries(trip) {
     $('#deliveriesList').html(html);
     
     // Show end trip button if there are deliveries
-    if (deliveries.length > 0) {
-        $('#endTripSection').removeClass('hidden');
-    }
+    $('#endTripSection').removeClass('hidden');
 }
 
-function callManager() {
+function viewDeliveryDetail(deliveryId) {
+    // Navigate to delivery detail page (you can implement this later)
+    showToast('Delivery detail view - coming soon', 'info');
+}
+
+async function refreshDeliveries() {  // ← Made async
+    if (!currentTrip) return;
+    
+    // Add spinning animation to refresh button
+    const btn = event.target.closest('button');
+    const icon = btn.querySelector('svg');
+    icon.classList.add('animate-spin');
+    
+    console.log('Manual refresh: Reloading deliveries...');
+    await loadTripDeliveries(currentTrip);  // ← Added await
+    await loadCurrentLoad(currentTrip);  // ← Added await
+    
+    setTimeout(() => {
+        icon.classList.remove('animate-spin');
+        showToast('Deliveries refreshed', 'success');
+    }, 500);
+}
+
+async function refreshTripData() {  // ← Made async
+    // Add spinning animation to header refresh button
+    const btn = $('#refreshBtn svg');
+    btn.addClass('animate-spin');
+    
+    console.log('Full refresh: Reloading entire trip data...');
+    await loadActiveTrip();  // ← Added await
+    
+    setTimeout(() => {
+        btn.removeClass('animate-spin');
+        showToast('Trip data refreshed', 'success');
+    }, 500);
+}
+
+async function callManager() {  // ← Made async
     const user = getCurrentUser();
-    const godowns = getGodowns();
+    // UPDATED: Made data fetching async
+    const godowns = await getGodowns();  // ← Added await
     const godown = godowns.find(g => g.id === user.godown_id);
     
     if (godown && godown.phone) {
@@ -329,26 +450,34 @@ function closeEndTripModal() {
     $('#tripNotes').val('');
 }
 
-function submitEndTrip() {
+async function submitEndTrip() {  // ← Made async
     const endKm = parseInt($('#endKm').val());
     const notes = $('#tripNotes').val();
     
     if (!endKm || endKm < currentTrip.start_km) {
-        showToast('Please enter valid ending KM', 'error');
+        showToast('Please enter valid ending KM (must be greater than or equal to start KM)', 'error');
+        return;
+    }
+    
+    // Check if any deliveries were made
+    // UPDATED: Made data fetching async
+    const deliveries = (await getDeliveries()).filter(d => d.trip_id === currentTrip.id);  // ← Added await
+    if (deliveries.length === 0) {
+        showToast('Cannot end trip without any deliveries', 'warning');
         return;
     }
     
     // Update trip status to pending_closure (waiting for manager approval)
-    const trips = getTrips();
+    const trips = await getTrips();  // ← Added await
     const tripIndex = trips.findIndex(t => t.id === currentTrip.id);
     
     if (tripIndex !== -1) {
         trips[tripIndex].end_km = endKm;
         trips[tripIndex].end_time = new Date().toISOString();
         trips[tripIndex].driver_notes = notes;
-        trips[tripIndex].status = 'pending_closure'; // New status
+        trips[tripIndex].status = 'pending_closure'; // Trip awaiting manager approval
         
-        saveTrips(trips);
+        await saveTrips(trips);  // ← Added await
         
         showToast('Trip submitted to manager for approval', 'success');
         

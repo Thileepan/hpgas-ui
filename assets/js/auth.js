@@ -1,4 +1,4 @@
-// Authentication handler
+// Authentication handler - Updated for Supabase
 
 function fillCredentials(email, password) {
     $('#username').val(email);
@@ -29,40 +29,50 @@ function showToast(message, type = 'success') {
     }, 3000);
 }
 
-function login(email, password) {
-    const users = getUsers();
-    const user = users.find(u => u.email === email && u.password === password);
-    
-    if (user) {
-        // Check if user is active
-        if (user.status === 'inactive') {
-            showToast('Your account has been deactivated. Please contact admin.', 'error');
+// UPDATED: Now async to work with Supabase
+async function login(email, password) {
+    try {
+        // Get users from Supabase (async)
+        const users = await getUsers();
+        
+        // Find matching user
+        const user = users.find(u => u.email === email && u.password === password);
+        
+        if (user) {
+            // Check if user is active
+            if (user.status === 'inactive') {
+                showToast('Your account has been deactivated. Please contact admin.', 'error');
+                return false;
+            }
+            
+            // Store session
+            sessionStorage.setItem('hpgas_current_user', JSON.stringify(user));
+            
+            showToast('Login successful!', 'success');
+            
+            // Redirect based on role
+            setTimeout(() => {
+                switch(user.role) {
+                    case 'super_admin':
+                        window.location.href = 'admin-dashboard.html';
+                        break;
+                    case 'manager':
+                        window.location.href = 'manager-dashboard.html';
+                        break;
+                    case 'driver':
+                        window.location.href = 'driver-dashboard.html';
+                        break;
+                }
+            }, 500);
+            
+            return true;
+        } else {
+            showToast('Invalid credentials!', 'error');
             return false;
         }
-        
-        // Store session
-        sessionStorage.setItem('hpgas_current_user', JSON.stringify(user));
-        
-        showToast('Login successful!', 'success');
-        
-        // Redirect based on role
-        setTimeout(() => {
-            switch(user.role) {
-                case 'super_admin':
-                    window.location.href = 'admin-dashboard.html';
-                    break;
-                case 'manager':
-                    window.location.href = 'manager-dashboard.html';
-                    break;
-                case 'driver':
-                    window.location.href = 'driver-dashboard.html';
-                    break;
-            }
-        }, 500);
-        
-        return true;
-    } else {
-        showToast('Invalid credentials!', 'error');
+    } catch (error) {
+        console.error('Login error:', error);
+        showToast('Login failed. Please try again.', 'error');
         return false;
     }
 }
@@ -86,9 +96,9 @@ function checkAuth() {
     return user;
 }
 
-// Login form handler
+// Login form handler - UPDATED: async
 $(document).ready(function() {
-    $('#loginForm').on('submit', function(e) {
+    $('#loginForm').on('submit', async function(e) {  // ← Added async
         e.preventDefault();
         
         const email = $('#username').val().trim();
@@ -99,6 +109,6 @@ $(document).ready(function() {
             return;
         }
         
-        login(email, password);
+        await login(email, password);  // ← Added await
     });
 });

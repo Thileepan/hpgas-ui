@@ -1,8 +1,9 @@
 // Vehicles and Drivers Management JavaScript
+// UPDATED: Now using Supabase instead of localStorage
 
 let currentTab = 'vehicles';
 
-$(document).ready(function() {
+$(document).ready(async function() {
     const user = checkAuth();
     if (!user || user.role !== 'manager') {
         logout();
@@ -15,7 +16,7 @@ $(document).ready(function() {
     $('#userInitials').text(initials);
 
     // Get godown info
-    const godowns = getGodowns();
+    const godowns = await getGodowns();
     const godown = godowns.find(g => g.id === user.godown_id);
     if (godown) {
         $('#godownName').text(godown.name);
@@ -64,12 +65,12 @@ function switchTab(tab) {
 
 // ==================== VEHICLES ====================
 
-function loadVehicles() {
+async function loadVehicles() {
     const user = getCurrentUser();
-    const vehicles = getVehicles().filter(v => v.godown_id === user.godown_id);
-    const drivers = getDrivers();
-    const users = getUsers();
-    const loadmen = getLoadmen();
+    const vehicles = (await getVehicles()).filter(v => v.godown_id === user.godown_id);
+    const drivers = await getDrivers();
+    const users = await getUsers();
+    const loadmen = await getLoadmen();
 
     let html = '';
 
@@ -161,8 +162,8 @@ function openAddVehicleModal() {
     $('#vehicleModal').removeClass('hidden');
 }
 
-function editVehicle(id) {
-    const vehicles = getVehicles();
+async function editVehicle(id) {
+    const vehicles = await getVehicles();
     const vehicle = vehicles.find(v => v.id === id);
     
     if (!vehicle) return;
@@ -187,29 +188,29 @@ function closeVehicleModal() {
     $('#vehicleModal').addClass('hidden');
 }
 
-function saveVehicle() {
+async function saveVehicle() {
     const user = getCurrentUser();
     const vehicleId = $('#vehicleId').val();
     const vehicleNumber = $('#vehicleNumber').val().trim().toUpperCase();
     const vehicleType = $('#vehicleType').val();
-    const status = $('#vehicleStatus').val();
-    const primaryDriver = $('#primaryDriver').val();
-    const primaryLoadman1 = $('#primaryLoadman1').val();
-    const primaryLoadman2 = $('#primaryLoadman2').val();
+    const vehicleStatus = $('#vehicleStatus').val();
+    const primaryDriverId = $('#primaryDriver').val();
+    const primaryLoadman1Id = $('#primaryLoadman1').val();
+    const primaryLoadman2Id = $('#primaryLoadman2').val();
 
     if (!vehicleNumber || !vehicleType) {
         showToast('Please fill all required fields', 'error');
         return;
     }
 
-    let vehicles = getVehicles();
+    let vehicles = await getVehicles();
 
-    // Check duplicate vehicle number
+    // Check for duplicate vehicle number (excluding current vehicle if editing)
     const duplicate = vehicles.find(v => 
         v.vehicle_number === vehicleNumber && 
         v.id != vehicleId
     );
-
+    
     if (duplicate) {
         showToast('Vehicle number already exists', 'error');
         return;
@@ -221,10 +222,10 @@ function saveVehicle() {
         if (index !== -1) {
             vehicles[index].vehicle_number = vehicleNumber;
             vehicles[index].vehicle_type = vehicleType;
-            vehicles[index].status = status;
-            vehicles[index].primary_driver_id = primaryDriver ? parseInt(primaryDriver) : null;
-            vehicles[index].primary_loadman1_id = primaryLoadman1 ? parseInt(primaryLoadman1) : null;
-            vehicles[index].primary_loadman2_id = primaryLoadman2 ? parseInt(primaryLoadman2) : null;
+            vehicles[index].status = vehicleStatus;
+            vehicles[index].primary_driver_id = primaryDriverId ? parseInt(primaryDriverId) : null;
+            vehicles[index].primary_loadman1_id = primaryLoadman1Id ? parseInt(primaryLoadman1Id) : null;
+            vehicles[index].primary_loadman2_id = primaryLoadman2Id ? parseInt(primaryLoadman2Id) : null;
         }
         showToast('Vehicle updated successfully', 'success');
     } else {
@@ -235,37 +236,40 @@ function saveVehicle() {
             vehicle_number: vehicleNumber,
             vehicle_type: vehicleType,
             godown_id: user.godown_id,
-            primary_driver_id: primaryDriver ? parseInt(primaryDriver) : null,
-            primary_loadman1_id: primaryLoadman1 ? parseInt(primaryLoadman1) : null,
-            primary_loadman2_id: primaryLoadman2 ? parseInt(primaryLoadman2) : null,
-            status: status,
+            status: vehicleStatus,
+            primary_driver_id: primaryDriverId ? parseInt(primaryDriverId) : null,
+            primary_loadman1_id: primaryLoadman1Id ? parseInt(primaryLoadman1Id) : null,
+            primary_loadman2_id: primaryLoadman2Id ? parseInt(primaryLoadman2Id) : null,
             created_at: new Date().toISOString()
         });
         showToast('Vehicle added successfully', 'success');
     }
 
-    localStorage.setItem('hpgas_vehicles', JSON.stringify(vehicles));
+    // UPDATED: Use Supabase instead of localStorage
+    await saveVehicles(vehicles);
     loadVehicles();
     closeVehicleModal();
 }
 
-function deleteVehicle(id, vehicleNumber) {
+async function deleteVehicle(id, vehicleNumber) {
     if (!confirm(`Are you sure you want to delete vehicle ${vehicleNumber}?`)) {
         return;
     }
 
     // Check if vehicle is used in any ongoing trips
-    const trips = getTrips();
-    const activeTrip = trips.find(t => t.vehicle_id === id && t.status === 'ongoing');
+    const trips = await getTrips();
+    const ongoingTrip = trips.find(t => t.vehicle_id === id && t.status === 'ongoing');
     
-    if (activeTrip) {
-        showToast('Cannot delete vehicle. It is assigned to an ongoing trip.', 'error');
+    if (ongoingTrip) {
+        showToast('Cannot delete vehicle with ongoing trip', 'error');
         return;
     }
 
-    let vehicles = getVehicles();
+    let vehicles = await getVehicles();
     vehicles = vehicles.filter(v => v.id !== id);
-    localStorage.setItem('hpgas_vehicles', JSON.stringify(vehicles));
+    
+    // UPDATED: Use Supabase instead of localStorage
+    await saveVehicles(vehicles);
     
     showToast('Vehicle deleted successfully', 'success');
     loadVehicles();
@@ -273,9 +277,9 @@ function deleteVehicle(id, vehicleNumber) {
 
 // ==================== DRIVERS ====================
 
-function loadDrivers() {
+async function loadDrivers() {
     const user = getCurrentUser();
-    const drivers = getDrivers().filter(d => d.godown_id === user.godown_id);
+    const drivers = (await getDrivers()).filter(d => d.godown_id === user.godown_id);
 
     let html = '';
 
@@ -312,22 +316,11 @@ function loadDrivers() {
                         <span class="badge ${statusColor} capitalize">${driver.status}</span>
                     </div>
 
-                    <div class="space-y-2 mb-3">
-                        <div class="flex items-center gap-2 text-sm text-gray-600">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
-                            </svg>
-                            <span>License: <strong>${driver.license_number}</strong></span>
+                    ${driver.email ? `
+                        <div class="mb-3">
+                            <span class="text-sm text-gray-600">${driver.email}</span>
                         </div>
-                        ${driver.email ? `
-                        <div class="flex items-center gap-2 text-sm text-gray-600">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                            </svg>
-                            <span>${driver.email}</span>
-                        </div>
-                        ` : ''}
-                    </div>
+                    ` : ''}
 
                     <div class="flex gap-2 pt-3 border-t border-gray-200">
                         <button onclick="editDriver(${driver.id})" class="flex-1 btn btn-secondary btn-sm">
@@ -358,8 +351,8 @@ function openAddDriverModal() {
     $('#driverModal').removeClass('hidden');
 }
 
-function editDriver(id) {
-    const drivers = getDrivers();
+async function editDriver(id) {
+    const drivers = await getDrivers();
     const driver = drivers.find(d => d.id === id);
     
     if (!driver) return;
@@ -368,7 +361,6 @@ function editDriver(id) {
     $('#driverId').val(driver.id);
     $('#driverName').val(driver.name);
     $('#driverPhone').val(driver.phone);
-    $('#driverLicense').val(driver.license_number);
     $('#driverEmail').val(driver.email || '');
     $('#driverStatus').val(driver.status);
     
@@ -379,42 +371,59 @@ function closeDriverModal() {
     $('#driverModal').addClass('hidden');
 }
 
-function saveDriver() {
+async function saveDriver() {
     const user = getCurrentUser();
     const driverId = $('#driverId').val();
     const name = $('#driverName').val().trim();
     const phone = $('#driverPhone').val().trim();
-    const license = $('#driverLicense').val().trim().toUpperCase();
     const email = $('#driverEmail').val().trim();
     const status = $('#driverStatus').val();
 
-    if (!name || !phone || !license) {
+    if (!name || !phone) {
         showToast('Please fill all required fields', 'error');
         return;
     }
 
-    let drivers = getDrivers();
+    // Get all users to check for duplicates
+    let users = await getUsers();
+
+    // // Check for duplicate email (if provided)
+    // if (email) {
+    //     const duplicate = users.find(u => 
+    //         u.email === email && 
+    //         u.id != driverId
+    //     );
+        
+    //     if (duplicate) {
+    //         showToast('Email already exists', 'error');
+    //         return;
+    //     }
+    // }
 
     if (driverId) {
         // Edit existing
-        const index = drivers.findIndex(d => d.id == driverId);
+        const index = users.findIndex(u => u.id == driverId);
         if (index !== -1) {
-            drivers[index].name = name;
-            drivers[index].phone = phone;
-            drivers[index].license_number = license;
-            drivers[index].email = email;
-            drivers[index].status = status;
+            users[index].name = name;
+            users[index].phone = phone;
+            users[index].email = email;
+            users[index].status = status;
         }
         showToast('Driver updated successfully', 'success');
     } else {
         // Add new
-        const newId = drivers.length > 0 ? Math.max(...drivers.map(d => d.id)) + 1 : 1;
-        drivers.push({
+        const newId = users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1;
+        
+        // Generate email if not provided
+        const driverEmail = email || `driver${newId}@hpgas.com`;
+        
+        users.push({
             id: newId,
+            email: driverEmail,
+            password: 'driver123', // Default password
+            role: 'driver',
             name: name,
             phone: phone,
-            license_number: license,
-            email: email,
             godown_id: user.godown_id,
             status: status,
             created_at: new Date().toISOString()
@@ -422,19 +431,20 @@ function saveDriver() {
         showToast('Driver added successfully', 'success');
     }
 
-    localStorage.setItem('hpgas_drivers', JSON.stringify(drivers));
+    // UPDATED: Use Supabase instead of localStorage
+    await saveUsers(users);
     loadDrivers();
     loadVehicles(); // Refresh vehicles to show updated driver names
     closeDriverModal();
 }
 
-function deleteDriver(id, name) {
+async function deleteDriver(id, name) {
     if (!confirm(`Are you sure you want to delete driver ${name}?`)) {
         return;
     }
 
-    // Check if driver is assigned to any vehicle or ongoing trip
-    const vehicles = getVehicles();
+    // Check if driver is assigned to any vehicle
+    const vehicles = await getVehicles();
     const assignedVehicle = vehicles.find(v => v.primary_driver_id === id);
     
     if (assignedVehicle) {
@@ -442,17 +452,20 @@ function deleteDriver(id, name) {
         return;
     }
 
-    const trips = getTrips();
-    const activeTrip = trips.find(t => t.driver_id === id && t.status === 'ongoing');
+    // Check if driver has ongoing trips
+    const trips = await getTrips();
+    const ongoingTrip = trips.find(t => t.driver_id === id && t.status === 'ongoing');
     
-    if (activeTrip) {
-        showToast('Cannot delete driver. Assigned to an ongoing trip.', 'error');
+    if (ongoingTrip) {
+        showToast('Cannot delete driver with ongoing trip', 'error');
         return;
     }
 
-    let drivers = getDrivers();
-    drivers = drivers.filter(d => d.id !== id);
-    localStorage.setItem('hpgas_drivers', JSON.stringify(drivers));
+    let users = await getUsers();
+    users = users.filter(u => u.id !== id);
+    
+    // UPDATED: Use Supabase instead of localStorage
+    await saveUsers(users);
     
     showToast('Driver deleted successfully', 'success');
     loadDrivers();
@@ -460,9 +473,9 @@ function deleteDriver(id, name) {
 
 // ==================== LOADMEN ====================
 
-function loadLoadmen() {
+async function loadLoadmen() {
     const user = getCurrentUser();
-    const loadmen = getLoadmen().filter(l => l.godown_id === user.godown_id);
+    const loadmen = (await getLoadmen()).filter(l => l.godown_id === user.godown_id);
 
     let html = '';
 
@@ -528,8 +541,8 @@ function openAddLoadmanModal() {
     $('#loadmanModal').removeClass('hidden');
 }
 
-function editLoadman(id) {
-    const loadmen = getLoadmen();
+async function editLoadman(id) {
+    const loadmen = await getLoadmen();
     const loadman = loadmen.find(l => l.id === id);
     
     if (!loadman) return;
@@ -547,7 +560,7 @@ function closeLoadmanModal() {
     $('#loadmanModal').addClass('hidden');
 }
 
-function saveLoadman() {
+async function saveLoadman() {
     const user = getCurrentUser();
     const loadmanId = $('#loadmanId').val();
     const name = $('#loadmanName').val().trim();
@@ -559,22 +572,27 @@ function saveLoadman() {
         return;
     }
 
-    let loadmen = getLoadmen();
+    // Get all users to handle loadmen as users
+    let users = await getUsers();
 
     if (loadmanId) {
         // Edit existing
-        const index = loadmen.findIndex(l => l.id == loadmanId);
+        const index = users.findIndex(u => u.id == loadmanId);
         if (index !== -1) {
-            loadmen[index].name = name;
-            loadmen[index].phone = phone;
-            loadmen[index].status = status;
+            users[index].name = name;
+            users[index].phone = phone;
+            users[index].status = status;
         }
         showToast('Loadman updated successfully', 'success');
     } else {
         // Add new
-        const newId = loadmen.length > 0 ? Math.max(...loadmen.map(l => l.id)) + 1 : 1;
-        loadmen.push({
+        const newId = users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1;
+        
+        users.push({
             id: newId,
+            email: `loadman${newId}@hpgas.com`, // Generate email
+            password: 'loadman123', // Default password
+            role: 'loadman',
             name: name,
             phone: phone,
             godown_id: user.godown_id,
@@ -584,19 +602,20 @@ function saveLoadman() {
         showToast('Loadman added successfully', 'success');
     }
 
-    localStorage.setItem('hpgas_loadmen', JSON.stringify(loadmen));
+    // UPDATED: Use Supabase instead of localStorage
+    await saveUsers(users);
     loadLoadmen();
     loadVehicles(); // Refresh vehicles to show updated loadman names
     closeLoadmanModal();
 }
 
-function deleteLoadman(id, name) {
+async function deleteLoadman(id, name) {
     if (!confirm(`Are you sure you want to delete loadman ${name}?`)) {
         return;
     }
 
     // Check if loadman is assigned to any vehicle
-    const vehicles = getVehicles();
+    const vehicles = await getVehicles();
     const assignedVehicle = vehicles.find(v => 
         v.primary_loadman1_id === id || v.primary_loadman2_id === id
     );
@@ -606,9 +625,11 @@ function deleteLoadman(id, name) {
         return;
     }
 
-    let loadmen = getLoadmen();
-    loadmen = loadmen.filter(l => l.id !== id);
-    localStorage.setItem('hpgas_loadmen', JSON.stringify(loadmen));
+    let users = await getUsers();
+    users = users.filter(u => u.id !== id);
+    
+    // UPDATED: Use Supabase instead of localStorage
+    await saveUsers(users);
     
     showToast('Loadman deleted successfully', 'success');
     loadLoadmen();
@@ -616,10 +637,10 @@ function deleteLoadman(id, name) {
 
 // ==================== HELPER FUNCTIONS ====================
 
-function loadDriversDropdown() {
+async function loadDriversDropdown() {
     const user = getCurrentUser();
-    const drivers = getDrivers().filter(d => d.godown_id === user.godown_id && d.status === 'active');
-    const users = getUsers().filter(u => u.role === 'driver' && u.godown_id === user.godown_id);
+    const drivers = (await getDrivers()).filter(d => d.godown_id === user.godown_id && d.status === 'active');
+    const users = (await getUsers()).filter(u => u.role === 'driver' && u.godown_id === user.godown_id);
 
     let html = '<option value="">-- Select Driver --</option>';
     [...drivers, ...users].forEach(driver => {
@@ -629,9 +650,9 @@ function loadDriversDropdown() {
     $('#primaryDriver').html(html);
 }
 
-function loadLoadmenDropdown() {
+async function loadLoadmenDropdown() {
     const user = getCurrentUser();
-    const loadmen = getLoadmen().filter(l => l.godown_id === user.godown_id && l.status === 'active');
+    const loadmen = (await getLoadmen()).filter(l => l.godown_id === user.godown_id && l.status === 'active');
 
     let html = '<option value="">-- Select Loadman --</option>';
     loadmen.forEach(loadman => {

@@ -1,8 +1,9 @@
 // Manager Trip Details JavaScript
+// UPDATED: Now using Supabase instead of localStorage
 
 let currentTrip = null;
 
-$(document).ready(function() {
+$(document).ready(async function() {  // ← Made async
     const user = checkAuth();
     if (!user || user.role !== 'manager') {
         logout();
@@ -14,8 +15,8 @@ $(document).ready(function() {
     const initials = user.name.split(' ').map(n => n[0]).join('');
     $('#userInitials').text(initials);
 
-    // Get godown info
-    const godowns = getGodowns();
+    // Get godown info - UPDATED: Made async
+    const godowns = await getGodowns();
     const godown = godowns.find(g => g.id === user.godown_id);
     if (godown) {
         $('#godownName').text(godown.name);
@@ -33,17 +34,17 @@ $(document).ready(function() {
         return;
     }
 
-    loadTripDetails(tripId);
+    await loadTripDetails(tripId);
 
-    // Close trip form handler
-    $('#closeTripForm').submit(function(e) {
+    // Close trip form handler - UPDATED: Made async
+    $('#closeTripForm').submit(async function(e) {  // ← Made async
         e.preventDefault();
-        closeTrip();
+        await closeTrip();  // ← Added await
     });
 });
 
-function loadTripDetails(tripId) {
-    const trips = getTrips();
+async function loadTripDetails(tripId) {  // ← Made async
+    const trips = await getTrips();  // ← Added await
     const trip = trips.find(t => t.id === tripId);
 
     if (!trip) {
@@ -60,14 +61,14 @@ function loadTripDetails(tripId) {
     $('#dcNumberHeader').text(trip.dc_number);
     $('#tripTypeHeader').text(trip.trip_type === 'delivery' ? 'Delivery Trip' : 'Refill Trip');
 
-    // Load all sections
+    // Load all sections - UPDATED: Made async
     loadTripStatus(trip);
-    loadTripInfo(trip);
-    loadVehicleCrew(trip);
+    await loadTripInfo(trip);
+    await loadVehicleCrew(trip);
     loadLoadDetails(trip);
     
     if (trip.trip_type === 'delivery') {
-        loadDeliveries(trip);
+        await loadDeliveries(trip);
     }
 
     // Show close button if ongoing
@@ -162,7 +163,7 @@ function loadTripStatus(trip) {
     $('#tripStatusCard').html(statusHtml);
 }
 
-function loadTripInfo(trip) {
+async function loadTripInfo(trip) {  // ← Made async
     const startTime = new Date(trip.start_time);
     const endTime = trip.end_time ? new Date(trip.end_time) : null;
 
@@ -232,9 +233,9 @@ function loadTripInfo(trip) {
         `;
     }
 
-    // Add filling station info for refill trips
+    // Add filling station info for refill trips - UPDATED: Made async
     if (trip.trip_type === 'refill' && trip.filling_station_id) {
-        const stations = getFillingStations();
+        const stations = await getFillingStations();  // ← Added await
         const station = stations.find(s => s.id === trip.filling_station_id);
         
         if (station) {
@@ -256,11 +257,12 @@ function loadTripInfo(trip) {
     $('#tripInfo').html(html);
 }
 
-function loadVehicleCrew(trip) {
-    const vehicles = getVehicles();
-    const drivers = getDrivers();
-    const users = getUsers();
-    const loadmen = getLoadmen();
+async function loadVehicleCrew(trip) {  // ← Made async
+    // UPDATED: Made all data fetching async
+    const vehicles = await getVehicles();
+    const drivers = await getDrivers();
+    const users = await getUsers();
+    const loadmen = await getLoadmen();
 
     const vehicle = vehicles.find(v => v.id === trip.vehicle_id);
     const driver = users.find(u => u.id === trip.driver_id) || drivers.find(d => d.id === trip.driver_id);
@@ -339,55 +341,17 @@ function loadLoadDetails(trip) {
                             <p class="text-xs text-gray-500 capitalize">${load.type}</p>
                         </div>
                     </div>
-                    <span class="text-lg font-bold text-orange-600">${load.quantity}</span>
+                    <span class="text-xl font-bold text-gray-900">${load.quantity}</span>
                 </div>
             </div>
         `;
     });
 
-    // Add filled details if available (for completed refill trips)
-    if (trip.filled_details && trip.filled_details.length > 0) {
-        html += `<div class="pt-3 mt-3 border-t border-gray-200">
-            <p class="text-sm font-medium text-gray-700 mb-2">Filled Cylinders Received:</p>
-        `;
-        
-        trip.filled_details.forEach(filled => {
-            html += `
-                <div class="p-3 bg-green-50 rounded-lg border border-green-200">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                                <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                            </div>
-                            <p class="font-semibold text-gray-900">${filled.provider} ${filled.kg}kg Filled</p>
-                        </div>
-                        <span class="text-lg font-bold text-green-600">${filled.quantity}</span>
-                    </div>
-                </div>
-            `;
-        });
-        
-        html += '</div>';
-    }
-
-    // Add total count
-    const totalCylinders = trip.load_details.reduce((sum, item) => sum + item.quantity, 0);
-    html += `
-        <div class="p-3 bg-orange-50 rounded-lg border-2 border-orange-200 mt-2">
-            <div class="flex items-center justify-between">
-                <span class="font-semibold text-orange-700">Total Cylinders</span>
-                <span class="text-xl font-bold text-orange-600">${totalCylinders}</span>
-            </div>
-        </div>
-    `;
-
     $('#loadDetails').html(html);
 }
 
-function loadDeliveries(trip) {
-    const deliveries = getDeliveries().filter(d => d.trip_id === trip.id);
+async function loadDeliveries(trip) {  // ← Made async
+    const deliveries = (await getDeliveries()).filter(d => d.trip_id === trip.id);  // ← Added await
 
     if (deliveries.length === 0) {
         $('#deliveriesSection').hide();
@@ -397,7 +361,7 @@ function loadDeliveries(trip) {
     $('#deliveriesSection').show();
     $('#deliveryCount').text(deliveries.length);
 
-    const customers = getCustomers();
+    const customers = await getCustomers();  // ← Added await
     let html = '';
 
     deliveries.forEach((delivery, index) => {
@@ -481,7 +445,7 @@ function closeModal() {
     $('#closeTripModal').addClass('hidden');
 }
 
-function closeTrip() {
+async function closeTrip() {  // ← Made async
     const endKm = parseInt($('#endKm').val());
     const endTime = $('#endTime').val();
 
@@ -514,8 +478,8 @@ function closeTrip() {
         });
     }
 
-    // Update trip
-    const trips = getTrips();
+    // Update trip - UPDATED: Made async
+    const trips = await getTrips();
     const tripIndex = trips.findIndex(t => t.id === currentTrip.id);
     
     if (tripIndex === -1) {
@@ -531,10 +495,11 @@ function closeTrip() {
         trips[tripIndex].filled_details = filledDetails;
     }
 
-    saveTrips(trips);
+    // UPDATED: Use Supabase instead of localStorage
+    await saveTrips(trips);
 
     // Update inventory - move from in_transit back to stock
-    updateInventoryOnClose(trips[tripIndex]);
+    await updateInventoryOnClose(trips[tripIndex]);
 
     showToast('Trip closed successfully!', 'success');
 
@@ -546,47 +511,115 @@ function closeTrip() {
     }, 1000);
 }
 
-function updateInventoryOnClose(trip) {
-    const inventory = getInventory();
+async function updateInventoryOnClose(trip) {
+    const inventory = await getInventory();
     
-    // Move load details from in_transit back to stock
-    trip.load_details.forEach(load => {
-        const invItem = inventory.find(i => 
-            i.godown_id === trip.godown_id &&
-            i.provider === load.provider &&
-            i.kg === load.kg
-        );
+    console.log('Updating inventory on trip close:', trip.dc_number);
+    
+    if (trip.trip_type === 'delivery') {
+        // ===== DELIVERY TRIP CLOSURE =====
+        // Calculate what was actually delivered vs what was loaded
+        const deliveries = await getDeliveries();
+        const tripDeliveries = deliveries.filter(d => d.trip_id === trip.id);
         
-        if (!invItem) return;
+        // Calculate total delivered per cylinder type
+        const deliveredSummary = {};
+        tripDeliveries.forEach(delivery => {
+            delivery.delivered_items.forEach(item => {
+                const key = `${item.provider}_${item.kg}`;
+                if (!deliveredSummary[key]) {
+                    deliveredSummary[key] = {
+                        provider: item.provider,
+                        kg: item.kg,
+                        quantity: 0
+                    };
+                }
+                deliveredSummary[key].quantity += item.quantity;
+            });
+        });
         
-        // Reduce in_transit
-        invItem.in_transit = Math.max(0, invItem.in_transit - load.quantity);
+        console.log('Delivered summary:', deliveredSummary);
         
-        // Add back to appropriate stock
-        if (load.type === 'filled') {
-            invItem.filled += load.quantity;
-        } else if (load.type === 'empty') {
-            invItem.empty += load.quantity;
-        }
-    });
-
-    // For refill trips, add filled cylinders received
-    if (trip.filled_details) {
-        trip.filled_details.forEach(filled => {
+        // For each load item, calculate what needs to return to inventory
+        trip.load_details.forEach(load => {
             const invItem = inventory.find(i => 
                 i.godown_id === trip.godown_id &&
-                i.provider === filled.provider &&
-                i.kg === filled.kg
+                i.provider === load.provider &&
+                parseFloat(i.kg) === parseFloat(load.kg)
             );
             
-            if (invItem) {
-                // The filled cylinders were counted as empty when leaving
-                // Now we need to reduce empty and add to filled
-                invItem.empty = Math.max(0, invItem.empty - filled.quantity);
-                invItem.filled += filled.quantity;
+            if (!invItem) {
+                console.warn(`Inventory item not found: ${load.provider} ${load.kg}kg`);
+                return;
+            }
+            
+            // Get how many were actually delivered
+            const key = `${load.provider}_${load.kg}`;
+            const delivered = deliveredSummary[key] ? deliveredSummary[key].quantity : 0;
+            
+            // Calculate undelivered (return to godown)
+            const undelivered = load.quantity - delivered;
+            
+            if (undelivered > 0) {
+                // Return undelivered cylinders to godown
+                invItem.in_transit = Math.max(0, invItem.in_transit - undelivered);
+                
+                if (load.type === 'filled') {
+                    invItem.filled += undelivered;
+                    console.log(`${load.provider} ${load.kg}kg: Returned ${undelivered} filled to godown (${delivered} were delivered)`);
+                } else if (load.type === 'empty') {
+                    invItem.empty += undelivered;
+                    console.log(`${load.provider} ${load.kg}kg: Returned ${undelivered} empty to godown`);
+                }
+            } else if (undelivered === 0) {
+                console.log(`${load.provider} ${load.kg}kg: All ${load.quantity} cylinders delivered, nothing to return`);
+            } else {
+                // This shouldn't happen (delivered more than loaded)
+                console.warn(`${load.provider} ${load.kg}kg: Delivered ${delivered} but only loaded ${load.quantity}!`);
             }
         });
+        
+    } else if (trip.trip_type === 'refill') {
+        // ===== REFILL TRIP CLOSURE =====
+        // Empties were sent, filled cylinders are coming back
+        
+        trip.load_details.forEach(load => {
+            const invItem = inventory.find(i => 
+                i.godown_id === trip.godown_id &&
+                i.provider === load.provider &&
+                parseFloat(i.kg) === parseFloat(load.kg)
+            );
+            
+            if (!invItem) {
+                console.warn(`Inventory item not found: ${load.provider} ${load.kg}kg`);
+                return;
+            }
+            
+            // Remove empties from in_transit (they're at filling station now)
+            if (load.type === 'empty') {
+                invItem.in_transit = Math.max(0, invItem.in_transit - load.quantity);
+                console.log(`${load.provider} ${load.kg}kg: Removed ${load.quantity} empty from in_transit`);
+            }
+        });
+        
+        // Add filled cylinders received from filling station
+        if (trip.filled_details && trip.filled_details.length > 0) {
+            trip.filled_details.forEach(filled => {
+                const invItem = inventory.find(i => 
+                    i.godown_id === trip.godown_id &&
+                    i.provider === filled.provider &&
+                    parseFloat(i.kg) === parseFloat(filled.kg)
+                );
+                
+                if (invItem) {
+                    // Add filled cylinders to inventory
+                    invItem.filled += filled.quantity;
+                    console.log(`${filled.provider} ${filled.kg}kg: Added ${filled.quantity} filled from refill station`);
+                }
+            });
+        }
     }
     
-    saveInventory(inventory);
+    await saveInventory(inventory);
+    console.log('Inventory updated on trip close');
 }

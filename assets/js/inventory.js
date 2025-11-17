@@ -1,9 +1,10 @@
 // Inventory Dashboard JavaScript
+// UPDATED: Now using Supabase instead of localStorage
 
 let currentProviderFilter = 'all';
 const LOW_STOCK_THRESHOLD = 20; // Alert when filled stock below this number
 
-$(document).ready(function() {
+$(document).ready(async function() {  // ← Made async
     const user = checkAuth();
     if (!user || user.role !== 'manager') {
         logout();
@@ -15,8 +16,8 @@ $(document).ready(function() {
     const initials = user.name.split(' ').map(n => n[0]).join('');
     $('#userInitials').text(initials);
 
-    // Get godown info
-    const godowns = getGodowns();
+    // Get godown info - UPDATED: Made async
+    const godowns = await getGodowns();
     const godown = godowns.find(g => g.id === user.godown_id);
     if (godown) {
         $('#godownName').text(godown.name);
@@ -24,26 +25,26 @@ $(document).ready(function() {
     }
 
     // Load inventory
-    loadInventory();
+    await loadInventory();
 
     // Provider filter handlers
-    $('.provider-filter-btn').click(function() {
+    $('.provider-filter-btn').click(async function() {  // ← Made async
         $('.provider-filter-btn').removeClass('active');
         $(this).addClass('active');
         currentProviderFilter = $(this).data('provider');
-        loadInventory();
+        await loadInventory();  // ← Added await
     });
 
-    // Adjustment form handler
-    $('#adjustmentForm').submit(function(e) {
+    // Adjustment form handler - UPDATED: Made async
+    $('#adjustmentForm').submit(async function(e) {  // ← Made async
         e.preventDefault();
-        adjustStock();
+        await adjustStock();  // ← Added await
     });
 });
 
-function loadInventory() {
+async function loadInventory() {  // ← Made async
     const user = getCurrentUser();
-    let inventory = getInventory().filter(i => i.godown_id === user.godown_id);
+    let inventory = (await getInventory()).filter(i => i.godown_id === user.godown_id);  // ← Added await
 
     // Apply provider filter
     if (currentProviderFilter !== 'all') {
@@ -282,7 +283,7 @@ function closeAdjustmentModal() {
     $('#adjustmentModal').addClass('hidden');
 }
 
-function adjustStock() {
+async function adjustStock() {  // ← Made async
     const user = getCurrentUser();
     const provider = $('#adjustProvider').val();
     const kg = $('#adjustKg').val();
@@ -301,7 +302,7 @@ function adjustStock() {
         return;
     }
 
-    let inventory = getInventory();
+    let inventory = await getInventory();  // ← Added await
     
     // Find or create inventory item
     let invItem = inventory.find(i => 
@@ -352,21 +353,22 @@ function adjustStock() {
         new_value: invItem[type]
     });
 
-    saveInventory(inventory);
+    // UPDATED: Use Supabase instead of localStorage
+    await saveInventory(inventory);
 
     const action = adjustmentType === 'add' ? 'added' : 'removed';
     showToast(`Successfully ${action} ${quantity} ${provider} ${kg}kg ${type} cylinders`, 'success');
 
     closeAdjustmentModal();
-    loadInventory();
+    await loadInventory();
 }
 
 // ==================== HELPER FUNCTIONS ====================
 
-function exportInventoryReport() {
+async function exportInventoryReport() {  // ← Made async
     const user = getCurrentUser();
-    const inventory = getInventory().filter(i => i.godown_id === user.godown_id);
-    const godowns = getGodowns();
+    const inventory = (await getInventory()).filter(i => i.godown_id === user.godown_id);  // ← Added await
+    const godowns = await getGodowns();  // ← Added await
     const godown = godowns.find(g => g.id === user.godown_id);
 
     let report = `Inventory Report - ${godown.name}\n`;

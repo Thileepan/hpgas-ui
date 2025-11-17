@@ -1,6 +1,7 @@
 // Admin Godowns JavaScript
+// UPDATED: Now using Supabase instead of localStorage
 
-$(document).ready(function() {
+$(document).ready(async function() {  // ← Made async
     const user = checkAuth();
     if (!user || user.role !== 'super_admin') {
         logout();
@@ -12,20 +13,21 @@ $(document).ready(function() {
     const initials = user.name.split(' ').map(n => n[0]).join('');
     $('#userInitials').text(initials);
 
-    loadGodownsData();
+    await loadGodownsData();
 
-    // Form submission
-    $('#godownForm').on('submit', function(e) {
+    // Form submission - UPDATED: Made async
+    $('#godownForm').on('submit', async function(e) {  // ← Made async
         e.preventDefault();
-        saveGodown();
+        await saveGodown();  // ← Added await
     });
 });
 
-function loadGodownsData() {
-    const godowns = getGodowns();
-    const vehicles = getVehicles();
-    const users = getUsers();
-    const trips = getTrips();
+async function loadGodownsData() {  // ← Made async
+    // UPDATED: Made all data fetching async
+    const godowns = await getGodowns();
+    const vehicles = await getVehicles();
+    const users = await getUsers();
+    const trips = await getTrips();
 
     // Update summary stats
     $('#totalGodowns').text(godowns.length);
@@ -38,10 +40,10 @@ function loadGodownsData() {
     $('#activeTrips').text(activeTrips.length);
 
     // Load godowns list
-    loadGodownsList(godowns);
+    await loadGodownsList(godowns);
 }
 
-function loadGodownsList(godowns) {
+async function loadGodownsList(godowns) {  // ← Made async
     if (godowns.length === 0) {
         $('#godownsList').addClass('hidden');
         $('#emptyState').removeClass('hidden');
@@ -51,10 +53,11 @@ function loadGodownsList(godowns) {
     $('#godownsList').removeClass('hidden');
     $('#emptyState').addClass('hidden');
 
-    const inventory = getInventory();
-    const vehicles = getVehicles();
-    const users = getUsers();
-    const trips = getTrips();
+    // UPDATED: Made all data fetching async
+    const inventory = await getInventory();
+    const vehicles = await getVehicles();
+    const users = await getUsers();
+    const trips = await getTrips();
 
     let html = '';
     godowns.forEach((godown, index) => {
@@ -131,7 +134,7 @@ function loadGodownsList(godowns) {
                             ${godown.phone}
                         </span>
                     </div>
-                    <button onclick="event.stopPropagation(); openEditGodownModal('${godown.id}')" 
+                    <button onclick="event.stopPropagation(); handleEditGodown(${godown.id})" 
                             class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                         <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
@@ -153,8 +156,8 @@ function openAddGodownModal() {
     $('#godownModal').removeClass('hidden');
 }
 
-function openEditGodownModal(godownId) {
-    const godowns = getGodowns();
+async function openEditGodownModal(godownId) {  // ← Made async
+    const godowns = await getGodowns();  // ← Added await
     const godown = godowns.find(g => g.id === godownId);
     
     if (!godown) return;
@@ -181,9 +184,13 @@ function closeGodownModal() {
     $('#godownForm')[0].reset();
 }
 
-function saveGodown() {
+// Wrapper function to handle async edit operation
+function handleEditGodown(godownId) {
+    openEditGodownModal(godownId);
+}
+
+async function saveGodown() {
     const godownId = $('#godownId').val();
-    const godowns = getGodowns();
     
     const godownData = {
         name: $('#godownName').val().trim(),
@@ -197,28 +204,39 @@ function saveGodown() {
         email: $('#godownEmail').val().trim() || null
     };
 
-    if (godownId) {
-        // Update existing godown
-        const index = godowns.findIndex(g => g.id === godownId);
-        if (index !== -1) {
-            godowns[index] = {
-                ...godowns[index],
-                ...godownData
+    try {
+        if (godownId) {
+            // Update existing godown - Convert string ID to number for comparison
+            const numericId = parseInt(godownId);
+            const godowns = await getGodowns();
+            const index = godowns.findIndex(g => g.id === numericId);
+            
+            if (index !== -1) {
+                godowns[index] = {
+                    ...godowns[index],
+                    ...godownData,
+                    updated_at: new Date().toISOString()
+                };
+                await saveGodowns(godowns);
+                showToast('Godown updated successfully!', 'success');
+            }
+        } else {
+            // Add new godown
+            const godowns = await getGodowns();
+            const newGodown = {
+                id: godowns.length > 0 ? Math.max(...godowns.map(g => g.id)) + 1 : 1,
+                ...godownData,
+                created_at: new Date().toISOString()
             };
-            showToast('Godown updated successfully!', 'success');
+            godowns.push(newGodown);
+            await saveGodowns(godowns);
+            showToast('Godown added successfully!', 'success');
         }
-    } else {
-        // Add new godown
-        const newGodown = {
-            id: 'G' + Date.now(),
-            ...godownData,
-            created_at: new Date().toISOString()
-        };
-        godowns.push(newGodown);
-        showToast('Godown added successfully!', 'success');
-    }
 
-    saveGodowns(godowns);
-    closeGodownModal();
-    loadGodownsData();
+        closeGodownModal();
+        await loadGodownsData();
+    } catch (error) {
+        console.error('Error saving godown:', error);
+        showToast('Error saving godown. Please try again.', 'error');
+    }
 }

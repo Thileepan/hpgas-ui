@@ -1,12 +1,13 @@
 // Filling Stations Management JavaScript
+// UPDATED: Now using Supabase instead of localStorage
 
 let currentFilter = 'all';
 let allStations = [];
 let filteredStations = [];
 
-$(document).ready(function() {
+$(document).ready(async function() {  // ← Made async
     const user = checkAuth();
-    if (!user || (user.role !== 'manager' && user.role !== 'admin')) {
+    if (!user || (user.role !== 'manager' && user.role !== 'super_admin')) {
         logout();
         return;
     }
@@ -16,8 +17,8 @@ $(document).ready(function() {
     const initials = user.name.split(' ').map(n => n[0]).join('');
     $('#userInitials').text(initials);
 
-    // Get godown info
-    const godowns = getGodowns();
+    // Get godown info - UPDATED: Made async
+    const godowns = await getGodowns();
     const godown = godowns.find(g => g.id === user.godown_id);
     if (godown) {
         $('#godownName').text(godown.name);
@@ -25,7 +26,7 @@ $(document).ready(function() {
     }
 
     // Load stations
-    loadStations();
+    await loadStations();
 
     // Search functionality
     $('#searchStation').on('input', function() {
@@ -40,15 +41,15 @@ $(document).ready(function() {
         filterStations();
     });
 
-    // Form handler
-    $('#stationForm').submit(function(e) {
+    // Form handler - UPDATED: Made async
+    $('#stationForm').submit(async function(e) {  // ← Made async
         e.preventDefault();
-        saveStation();
+        await saveStation();  // ← Added await
     });
 });
 
-function loadStations() {
-    allStations = getFillingStations();
+async function loadStations() {  // ← Made async
+    allStations = await getFillingStations();  // ← Added await
     filterStations();
     updateStats();
 }
@@ -175,14 +176,7 @@ function displayStations() {
                         </svg>
                         Edit
                     </button>
-                    ${station.phone ? `
-                        <button onclick="callStation('${station.phone}')" class="btn btn-secondary btn-sm">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
-                            </svg>
-                        </button>
-                    ` : ''}
-                    <button onclick="deleteStation(${station.id}, '${station.name}')" class="btn btn-secondary btn-sm text-red-600 hover:bg-red-50">
+                    <button onclick="deleteStation(${station.id}, '${station.name.replace(/'/g, "\\'")}')" class="btn btn-secondary btn-sm text-red-600 hover:bg-red-50">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                         </svg>
@@ -258,7 +252,7 @@ function closeStationModal() {
     $('#stationModal').addClass('hidden');
 }
 
-function saveStation() {
+async function saveStation() {  // ← Made async
     const stationId = $('#stationId').val();
     
     // Validate required fields
@@ -300,7 +294,7 @@ function saveStation() {
         notes: $('#stationNotes').val().trim() || ''
     };
 
-    let stations = getFillingStations();
+    let stations = await getFillingStations();  // ← Added await
 
     if (stationId) {
         // Edit existing
@@ -320,18 +314,19 @@ function saveStation() {
         showToast('Filling station added successfully', 'success');
     }
 
-    localStorage.setItem('hpgas_filling_stations', JSON.stringify(stations));
-    loadStations();
+    // UPDATED: Use Supabase instead of localStorage
+    await saveFillingStations(stations);
+    await loadStations();
     closeStationModal();
 }
 
-function deleteStation(id, name) {
+async function deleteStation(id, name) {  // ← Made async
     if (!confirm(`Are you sure you want to delete "${name}"?\n\nThis action cannot be undone.`)) {
         return;
     }
 
-    // Check if station is used in any refill trips
-    const trips = getTrips();
+    // Check if station is used in any refill trips - UPDATED: Made async
+    const trips = await getTrips();
     const stationTrips = trips.filter(t => t.filling_station_id === id);
     
     if (stationTrips.length > 0) {
@@ -340,15 +335,17 @@ function deleteStation(id, name) {
         }
     }
 
-    let stations = getFillingStations();
+    let stations = await getFillingStations();  // ← Added await
     stations = stations.filter(s => s.id !== id);
-    localStorage.setItem('hpgas_filling_stations', JSON.stringify(stations));
+    
+    // UPDATED: Use Supabase instead of localStorage
+    await saveFillingStations(stations);
     
     showToast('Filling station deleted successfully', 'success');
-    loadStations();
+    await loadStations();
 }
 
-function viewStationDetails(id) {
+async function viewStationDetails(id) {  // ← Made async
     const station = allStations.find(s => s.id === id);
     if (!station) return;
 
@@ -363,46 +360,59 @@ function viewStationDetails(id) {
         });
     }
 
-    // Get refill trip count
-    const trips = getTrips();
+    // Get refill trip count - UPDATED: Made async
+    const trips = await getTrips();
     const stationTrips = trips.filter(t => t.filling_station_id === id);
     const totalTrips = stationTrips.length;
-    const lastTrip = stationTrips.length > 0 
-        ? new Date(stationTrips[stationTrips.length - 1].created_at).toLocaleDateString('en-IN')
-        : 'No trips yet';
+    
+    let lastTrip = 'No trips yet';
+    if (stationTrips.length > 0) {
+        const sortedTrips = stationTrips.sort((a, b) => 
+            new Date(b.start_time) - new Date(a.start_time)
+        );
+        const lastTripDate = new Date(sortedTrips[0].start_time);
+        lastTrip = lastTripDate.toLocaleDateString();
+    }
 
-    let html = `
+    const html = `
         <div class="space-y-6">
-            <!-- Basic Info -->
-            <div>
-                <div class="flex items-center justify-between mb-4">
-                    <h4 class="text-lg font-semibold text-gray-900">${station.name}</h4>
-                    ${statusBadge}
+            <!-- Header -->
+            <div class="flex items-start gap-4">
+                <div class="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+                    </svg>
                 </div>
-                <div class="space-y-2">
-                    <div class="flex items-start gap-3">
-                        <svg class="w-5 h-5 text-gray-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        </svg>
-                        <div>
-                            <p class="text-sm font-medium text-gray-900">Address</p>
-                            <p class="text-sm text-gray-600">${station.address}</p>
-                            <p class="text-sm text-gray-600">${station.city}${station.pincode ? ' - ' + station.pincode : ''}</p>
-                        </div>
+                <div class="flex-1">
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="text-lg font-semibold text-gray-900">${station.name}</h4>
+                        ${statusBadge}
                     </div>
-                    ${station.latitude && station.longitude ? `
+                    <div class="space-y-2">
                         <div class="flex items-start gap-3">
                             <svg class="w-5 h-5 text-gray-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                             </svg>
                             <div>
-                                <p class="text-sm font-medium text-gray-900">Coordinates</p>
-                                <p class="text-sm text-gray-600">${station.latitude}, ${station.longitude}</p>
-                                <a href="https://www.google.com/maps/search/?api=1&query=${station.latitude},${station.longitude}" target="_blank" class="text-sm text-orange-600 hover:text-orange-700">View on Map →</a>
+                                <p class="text-sm font-medium text-gray-900">Address</p>
+                                <p class="text-sm text-gray-600">${station.address}</p>
+                                <p class="text-sm text-gray-600">${station.city}${station.pincode ? ' - ' + station.pincode : ''}</p>
                             </div>
                         </div>
-                    ` : ''}
+                        ${station.latitude && station.longitude ? `
+                            <div class="flex items-start gap-3">
+                                <svg class="w-5 h-5 text-gray-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                                </svg>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">Coordinates</p>
+                                    <p class="text-sm text-gray-600">${station.latitude}, ${station.longitude}</p>
+                                    <a href="https://www.google.com/maps/search/?api=1&query=${station.latitude},${station.longitude}" target="_blank" class="text-sm text-orange-600 hover:text-orange-700">View on Map →</a>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
                 </div>
             </div>
 
