@@ -110,7 +110,7 @@
         <!-- Content -->
         <div class="mobile-container animate-fade-in">
             <!-- Summary Cards -->
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
                 <div class="card card-compact animate-slide-up">
                     <div class="flex items-center justify-between mb-2">
                         <span class="text-xs text-gray-600">Total Filled</span>
@@ -129,7 +129,7 @@
                         <span class="text-xs text-gray-600">Total Empty</span>
                         <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
                             <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path>
                             </svg>
                         </div>
                     </div>
@@ -140,8 +140,8 @@
                 <div class="card card-compact animate-slide-up" style="animation-delay: 0.2s">
                     <div class="flex items-center justify-between mb-2">
                         <span class="text-xs text-gray-600">In Transit</span>
-                        <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                            <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                             </svg>
                         </div>
@@ -151,6 +151,19 @@
                 </div>
 
                 <div class="card card-compact animate-slide-up" style="animation-delay: 0.3s">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs text-gray-600">Customer Place</span>
+                        <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-2xl font-bold text-gray-900" id="totalCustomerPlace">0</div>
+                    <p class="text-xs text-gray-500 mt-1">Cylinders</p>
+                </div>
+
+                <div class="card card-compact animate-slide-up" style="animation-delay: 0.4s">
                     <div class="flex items-center justify-between mb-2">
                         <span class="text-xs text-gray-600">Damaged</span>
                         <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
@@ -165,7 +178,7 @@
             </div>
 
             <!-- Provider Filter -->
-            <div class="card mb-6 animate-slide-up" style="animation-delay: 0.4s">
+            <div class="card mb-6 animate-slide-up" style="animation-delay: 0.5s">
                 <div class="flex gap-2 overflow-x-auto">
                     <button class="provider-filter-btn active" data-provider="all">All Providers</button>
                     <button class="provider-filter-btn" data-provider="HP">HP</button>
@@ -226,6 +239,7 @@
                             <option value="">Select Type</option>
                             <option value="filled">Filled</option>
                             <option value="empty">Empty</option>
+                            <option value="customer_place">Customer Place</option>
                             <option value="damaged">Damaged</option>
                         </select>
                     </div>
@@ -256,7 +270,7 @@
                             </svg>
                             <div>
                                 <p class="text-sm font-medium text-yellow-800">Manual Adjustment</p>
-                                <p class="text-xs text-yellow-700 mt-1">This will directly modify the inventory. Please ensure accuracy.</p>
+                                <p class="text-xs text-yellow-700 mt-1">This will directly modify the inventory. Please ensure accuracy. Use "Customer Place" for initial setup of cylinders already at customer locations.</p>
                             </div>
                         </div>
                     </div>

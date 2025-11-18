@@ -3,7 +3,7 @@
 let allDeliveries = [];
 let filteredDeliveries = [];
 
-$(document).ready(function() {
+$(document).ready(async function() {  // ← Made async
     const user = checkAuth();
     if (!user || user.role !== 'driver') {
         logout();
@@ -17,7 +17,7 @@ $(document).ready(function() {
     $('#fromDate').val(formatDate(firstDayOfMonth));
     $('#toDate').val(formatDate(today));
     
-    loadDeliveries();
+    await loadDeliveries();  // ← Added await
     
     // Filter buttons
     $('.filter-btn').click(function() {
@@ -36,10 +36,10 @@ function formatDate(date) {
     return `${year}-${month}-${day}`;
 }
 
-function loadDeliveries() {
+async function loadDeliveries() {  // ← Made async
     const user = getCurrentUser();
-    const trips = getTrips();
-    const deliveries = getDeliveries();
+    const trips = await getTrips();  // ← Added await
+    const deliveries = await getDeliveries();  // ← Added await
     
     // Get all deliveries from trips where this user was the driver
     const userTrips = trips.filter(t => t.driver_id === user.id);
@@ -141,7 +141,7 @@ function filterDeliveries(fromDate, toDate) {
     displayDeliveries();
 }
 
-function displayDeliveries() {
+async function displayDeliveries() {  // ← Made async
     if (filteredDeliveries.length === 0) {
         $('#deliveriesList').addClass('hidden');
         $('#emptyState').removeClass('hidden');
@@ -151,7 +151,7 @@ function displayDeliveries() {
     $('#emptyState').addClass('hidden');
     $('#deliveriesList').removeClass('hidden');
     
-    const customers = getCustomers();
+    const customers = await getCustomers();  // ← Added await
     let html = '';
     let currentDate = null;
     
@@ -253,11 +253,11 @@ function displayDeliveries() {
     $('#deliveriesList').html(html);
 }
 
-function viewDeliveryDetail(deliveryId) {
+async function viewDeliveryDetail(deliveryId) {  // ← Made async
     const delivery = allDeliveries.find(d => d.id === deliveryId);
     if (!delivery) return;
     
-    const customers = getCustomers();
+    const customers = await getCustomers();  // ← Added await
     const customer = customers.find(c => c.id === delivery.customer_id);
     
     const time = new Date(delivery.delivery_date + ' ' + delivery.delivery_time).toLocaleTimeString('en-IN', { 

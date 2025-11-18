@@ -1,10 +1,10 @@
 // Inventory Dashboard JavaScript
-// UPDATED: Now using Supabase instead of localStorage
+// UPDATED: Now using Supabase with Customer Place tracking
 
 let currentProviderFilter = 'all';
 const LOW_STOCK_THRESHOLD = 20; // Alert when filled stock below this number
 
-$(document).ready(async function() {  // ← Made async
+$(document).ready(async function() {
     const user = checkAuth();
     if (!user || user.role !== 'manager') {
         logout();
@@ -16,7 +16,7 @@ $(document).ready(async function() {  // ← Made async
     const initials = user.name.split(' ').map(n => n[0]).join('');
     $('#userInitials').text(initials);
 
-    // Get godown info - UPDATED: Made async
+    // Get godown info
     const godowns = await getGodowns();
     const godown = godowns.find(g => g.id === user.godown_id);
     if (godown) {
@@ -28,23 +28,23 @@ $(document).ready(async function() {  // ← Made async
     await loadInventory();
 
     // Provider filter handlers
-    $('.provider-filter-btn').click(async function() {  // ← Made async
+    $('.provider-filter-btn').click(async function() {
         $('.provider-filter-btn').removeClass('active');
         $(this).addClass('active');
         currentProviderFilter = $(this).data('provider');
-        await loadInventory();  // ← Added await
+        await loadInventory();
     });
 
-    // Adjustment form handler - UPDATED: Made async
-    $('#adjustmentForm').submit(async function(e) {  // ← Made async
+    // Adjustment form handler
+    $('#adjustmentForm').submit(async function(e) {
         e.preventDefault();
-        await adjustStock();  // ← Added await
+        await adjustStock();
     });
 });
 
-async function loadInventory() {  // ← Made async
+async function loadInventory() {
     const user = getCurrentUser();
-    let inventory = (await getInventory()).filter(i => i.godown_id === user.godown_id);  // ← Added await
+    let inventory = (await getInventory()).filter(i => i.godown_id === user.godown_id);
 
     // Apply provider filter
     if (currentProviderFilter !== 'all') {
@@ -75,6 +75,7 @@ function calculateTotals(inventory) {
         filled: 0,
         empty: 0,
         in_transit: 0,
+        customer_place: 0,
         damaged: 0
     };
 
@@ -82,6 +83,7 @@ function calculateTotals(inventory) {
         totals.filled += item.filled;
         totals.empty += item.empty;
         totals.in_transit += item.in_transit;
+        totals.customer_place += (item.customer_place || 0);
         totals.damaged += item.damaged;
     });
 
@@ -89,12 +91,14 @@ function calculateTotals(inventory) {
     $('#totalFilled').text(totals.filled);
     $('#totalEmpty').text(totals.empty);
     $('#totalInTransit').text(totals.in_transit);
+    $('#totalCustomerPlace').text(totals.customer_place);
     $('#totalDamaged').text(totals.damaged);
 
     // Add animation to updated values
     animateValue('totalFilled', totals.filled);
     animateValue('totalEmpty', totals.empty);
     animateValue('totalInTransit', totals.in_transit);
+    animateValue('totalCustomerPlace', totals.customer_place);
     animateValue('totalDamaged', totals.damaged);
 }
 
@@ -132,10 +136,11 @@ function displayInventoryByProvider(providers) {
                 filled: items.reduce((sum, i) => sum + i.filled, 0),
                 empty: items.reduce((sum, i) => sum + i.empty, 0),
                 in_transit: items.reduce((sum, i) => sum + i.in_transit, 0),
+                customer_place: items.reduce((sum, i) => sum + (i.customer_place || 0), 0),
                 damaged: items.reduce((sum, i) => sum + i.damaged, 0)
             };
 
-            const totalCylinders = providerTotal.filled + providerTotal.empty + providerTotal.in_transit;
+            const totalCylinders = providerTotal.filled + providerTotal.empty + providerTotal.in_transit + providerTotal.customer_place;
             const filledPercentage = totalCylinders > 0 ? Math.round((providerTotal.filled / totalCylinders) * 100) : 0;
 
             html += `
@@ -168,6 +173,7 @@ function displayInventoryByProvider(providers) {
                             <span>Filled: ${providerTotal.filled}</span>
                             <span>Empty: ${providerTotal.empty}</span>
                             <span>Transit: ${providerTotal.in_transit}</span>
+                            <span>Customer: ${providerTotal.customer_place}</span>
                         </div>
                     </div>
 
@@ -176,7 +182,7 @@ function displayInventoryByProvider(providers) {
             `;
 
             items.sort((a, b) => parseFloat(a.kg) - parseFloat(b.kg)).forEach((item, itemIndex) => {
-                const itemTotal = item.filled + item.empty + item.in_transit;
+                const itemTotal = item.filled + item.empty + item.in_transit + (item.customer_place || 0);
                 const itemFilledPct = itemTotal > 0 ? Math.round((item.filled / itemTotal) * 100) : 0;
                 const isLowStock = item.filled < LOW_STOCK_THRESHOLD && item.filled > 0;
 
@@ -192,7 +198,7 @@ function displayInventoryByProvider(providers) {
                             <span class="text-sm font-medium text-gray-600">${itemTotal} total</span>
                         </div>
 
-                        <div class="grid grid-cols-4 gap-2 text-center">
+                        <div class="grid grid-cols-5 gap-2 text-center">
                             <div>
                                 <div class="text-lg font-bold text-green-600">${item.filled}</div>
                                 <div class="text-xs text-gray-500">Filled</div>
@@ -202,8 +208,12 @@ function displayInventoryByProvider(providers) {
                                 <div class="text-xs text-gray-500">Empty</div>
                             </div>
                             <div>
-                                <div class="text-lg font-bold text-orange-600">${item.in_transit}</div>
+                                <div class="text-lg font-bold text-blue-600">${item.in_transit}</div>
                                 <div class="text-xs text-gray-500">Transit</div>
+                            </div>
+                            <div>
+                                <div class="text-lg font-bold text-purple-600">${item.customer_place || 0}</div>
+                                <div class="text-xs text-gray-500">Customer</div>
                             </div>
                             <div>
                                 <div class="text-lg font-bold text-red-600">${item.damaged}</div>
@@ -283,7 +293,7 @@ function closeAdjustmentModal() {
     $('#adjustmentModal').addClass('hidden');
 }
 
-async function adjustStock() {  // ← Made async
+async function adjustStock() {
     const user = getCurrentUser();
     const provider = $('#adjustProvider').val();
     const kg = $('#adjustKg').val();
@@ -302,7 +312,7 @@ async function adjustStock() {  // ← Made async
         return;
     }
 
-    let inventory = await getInventory();  // ← Added await
+    let inventory = await getInventory();
     
     // Find or create inventory item
     let invItem = inventory.find(i => 
@@ -320,6 +330,7 @@ async function adjustStock() {  // ← Made async
             filled: 0,
             empty: 0,
             in_transit: 0,
+            customer_place: 0,
             damaged: 0
         };
         inventory.push(invItem);
@@ -336,6 +347,9 @@ async function adjustStock() {  // ← Made async
         case 'empty':
             invItem.empty = Math.max(0, invItem.empty + adjustAmount);
             break;
+        case 'customer_place':
+            invItem.customer_place = Math.max(0, (invItem.customer_place || 0) + adjustAmount);
+            break;
         case 'damaged':
             invItem.damaged = Math.max(0, invItem.damaged + adjustAmount);
             break;
@@ -350,14 +364,14 @@ async function adjustStock() {  // ← Made async
         type,
         adjustment: adjustmentType === 'add' ? `+${quantity}` : `-${quantity}`,
         reason,
-        new_value: invItem[type]
+        new_value: type === 'customer_place' ? invItem.customer_place : invItem[type]
     });
 
-    // UPDATED: Use Supabase instead of localStorage
     await saveInventory(inventory);
 
     const action = adjustmentType === 'add' ? 'added' : 'removed';
-    showToast(`Successfully ${action} ${quantity} ${provider} ${kg}kg ${type} cylinders`, 'success');
+    const typeLabel = type === 'customer_place' ? 'customer place' : type;
+    showToast(`Successfully ${action} ${quantity} ${provider} ${kg}kg ${typeLabel} cylinders`, 'success');
 
     closeAdjustmentModal();
     await loadInventory();
@@ -365,20 +379,20 @@ async function adjustStock() {  // ← Made async
 
 // ==================== HELPER FUNCTIONS ====================
 
-async function exportInventoryReport() {  // ← Made async
+async function exportInventoryReport() {
     const user = getCurrentUser();
-    const inventory = (await getInventory()).filter(i => i.godown_id === user.godown_id);  // ← Added await
-    const godowns = await getGodowns();  // ← Added await
+    const inventory = (await getInventory()).filter(i => i.godown_id === user.godown_id);
+    const godowns = await getGodowns();
     const godown = godowns.find(g => g.id === user.godown_id);
 
     let report = `Inventory Report - ${godown.name}\n`;
     report += `Generated: ${new Date().toLocaleString()}\n`;
     report += `\n`;
-    report += `Provider,Size,Filled,Empty,In Transit,Damaged,Total\n`;
+    report += `Provider,Size,Filled,Empty,In Transit,Customer Place,Damaged,Total\n`;
 
     inventory.forEach(item => {
-        const total = item.filled + item.empty + item.in_transit + item.damaged;
-        report += `${item.provider},${item.kg}kg,${item.filled},${item.empty},${item.in_transit},${item.damaged},${total}\n`;
+        const total = item.filled + item.empty + item.in_transit + (item.customer_place || 0) + item.damaged;
+        report += `${item.provider},${item.kg}kg,${item.filled},${item.empty},${item.in_transit},${item.customer_place || 0},${item.damaged},${total}\n`;
     });
 
     // Calculate totals
@@ -386,12 +400,13 @@ async function exportInventoryReport() {  // ← Made async
         filled: inventory.reduce((sum, i) => sum + i.filled, 0),
         empty: inventory.reduce((sum, i) => sum + i.empty, 0),
         in_transit: inventory.reduce((sum, i) => sum + i.in_transit, 0),
+        customer_place: inventory.reduce((sum, i) => sum + (i.customer_place || 0), 0),
         damaged: inventory.reduce((sum, i) => sum + i.damaged, 0)
     };
-    const grandTotal = totals.filled + totals.empty + totals.in_transit + totals.damaged;
+    const grandTotal = totals.filled + totals.empty + totals.in_transit + totals.customer_place + totals.damaged;
 
     report += `\n`;
-    report += `TOTALS,,${totals.filled},${totals.empty},${totals.in_transit},${totals.damaged},${grandTotal}\n`;
+    report += `TOTALS,,${totals.filled},${totals.empty},${totals.in_transit},${totals.customer_place},${totals.damaged},${grandTotal}\n`;
 
     // Download as CSV
     const blob = new Blob([report], { type: 'text/csv' });
